@@ -1,0 +1,186 @@
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<!--sources----------------------!-->
+
+<!-- Latest compiled and minified CSS -->
+<!--<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">!-->
+
+<!-- Optional theme -->
+<!--<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap-theme.min.css">!-->
+
+<link href="css/custom-theme/jquery-ui-1.10.0.custom.css" rel="stylesheet">
+<!--<link href="css/bootstrap.min.css" rel="stylesheet">!-->
+<link rel="stylesheet" href="js/tablesorter/themes/blue/style.css" type="text/css" id="" media="print, projection, screen" />
+<link type="text/css" rel="stylesheet" href="css/jquery.dropdown.css" />
+<link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+	<!---------------------------------!-->
+<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+
+<script src="js/jquery-ui-1.10.3.custom.js"></script>
+<script src="js/jquery.csvToTable.js"></script>
+<script type="text/javascript" src="js/tablesorter/jquery.tablesorter.js"></script> 
+<script type="text/javascript" src="js/jquery.dropdown.js"></script>
+<!-- Latest compiled and minified JavaScript -->
+<!--<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>!-->
+<style>
+.inline{
+	display: inline-block;
+}
+
+.container{
+	margin-top:100px;
+	margin-left:20%;
+	margin-right:20%;
+	
+}
+
+.ui-icon{
+	display:inline-block;
+	margin-left:2px;
+}
+
+</style>
+<script>
+/////////Globals///////////
+var submit;
+var resultCVS;
+
+
+/////////Functions/////////
+
+
+
+</script>
+<script>
+$( document ).ready(function() {
+
+
+	////////////////Event Listeners///////////
+
+	$('#currentLi').on('click',function(){
+		alert('change');
+
+	});
+	//////////////////////////////////////////
+	$("#Since").datepicker();
+  	$("#sinceIcon").click(function() { 
+    	$("#Since").datepicker( "show" );
+  	});
+	$('button').button();
+	submit= function(){
+		console.log('start submit');
+		$('#CSVTable').html("");
+		var data = {};
+		data.study = $(document).find('#studyI').val();
+		data.task = $(document).find('#taskI').val();
+		data.since = $(document).find('#sinceI').val();
+		data.until = $(document).find('#untilI').val();
+
+		if ($('#studyC').is(":checked")) data.studyc = 'true';
+		if ($('#taskC').is(":checked")) data.taskc = 'true';
+		if ($('#dataC').is(":checked")) data.datac = 'true';
+		if ($('#timeC').is(":checked")) data.timec = 'true';
+		if ($('#dayC').is(":checked")) data.dayc = 'true';
+		if ($('#weekC').is(":checked")) data.weekc = 'true';
+		if ($('#monthC').is(":checked")) data.monthc = 'true';
+		if ($('#yearC').is(":checked")) data.yearc = 'true';
+
+
+		
+		$.post( '/implicit/PITracking', JSON.stringify(data))
+		.done(function( data ) {
+		  	resultCVS = data;
+		    //$('#result').val(data);
+		    $(function() {
+  				$('#CSVTable').CSVToTable(resultCVS,{
+  					tableClass:'tablesorter'
+  				}).bind("loadComplete",function() { 
+  					$('#CSVTable').find('#cvsT').addClass('tablesorter');
+  					$('#CSVTable').find('table').tablesorter();
+				});;
+			});
+		});
+	
+	}
+
+});
+
+
+
+</script>
+</head>
+
+
+<body>
+<div class="container">
+	
+		<div id="enterStudy"  class="inline" style="padding-right:10px;">
+			<label>Enter Study </label>
+			<input id="studyI" type="text" id="studyName"></input>
+		</div>
+		<div id="enterStudy"  class="inline" style="padding-right:10px;">
+			<label>Enter Task </label>
+			<input id="taskI" type="text" id="taskName"></input>
+		</div>
+		<div id="enterStudy"  class="inline" style="padding-right:10px;">
+			<label>Since: </label>
+			<input id="sinceI" type="text" id="Since" readonly></input><i id="sinceIcon" class="icon-calendar"></i> 
+		</div>
+		<div id="enterStudy"  class="inline" style="padding-right:10px;">
+			<label>Until: </label>
+			<input id="untilI" type="text" id="until" type="text" readonly></input><i class="icon-calendar"></i>
+		</div>
+		
+	
+		<div id="view" style="position:relative;left:-40px;">
+			<p>
+				<div style="display:inline-block;">
+					<ul style="list-style-type: none;">
+    					<li><label>Show By: </label></li>
+    					<li><label>(or conbination of those)</label></li>
+    					
+  					</ul>
+  				</div>
+  				<div style="display:inline-block;padding:10px;margin-left:20px;">
+					Study: <input id="studyC" type="checkbox" name="sports" value="soccer" style="margin-right:10px;"/>
+					Task: <input id="taskC" type="checkbox" name="sports" value="soccer" style="margin-right:10px;" />
+					Data Group: <input id="dataC" type="checkbox" name="sports" value="soccer" style="margin-right:10px;" />
+					Time: <input id="timeC" type="checkbox" name="sports" value="soccer" style="margin-right:10px;" />
+					<div  style="display:inline-block;border:1px solid;padding:10px;">
+						D: <input id="dayC" type="checkbox" name="sports" value="soccer"  />
+						W: <input id="weekC" type="checkbox" name="sports" value="soccer"  />
+						M: <input id="monthC" type="checkbox" name="sports" value="soccer"  />
+						Y: <input id="yearC" type="checkbox" name="sports" value="soccer"  />
+
+
+					</div>
+				</div>
+				<button class="ui-button-primary"  data-dropdown="#dropdown-1">Current <i class="icon-caret-down" ></i></button>
+				<button class="ui-button-primary">Demo<i class="icon-caret-down" style="margin-left:2px;"></i></button>
+				<button id="submit" onclick="submit()" class="ui-button-success" style="margin-left:20px;">Submit</button>
+			<p>
+			
+		</div>
+	
+	
+	<p>
+		<div id="CSVTable" ></div>
+	</p>
+
+</div>	
+
+	
+
+
+<div id="dropdown-1" class="dropdown dropdown-tip">
+    <ul class="dropdown-menu">
+        <li id="currentLi"><a href="#1">Current</a></li>
+        <li id="HistoryLi"><a href="#2">History</a></li>
+        <li id="AllLi"><a href="#3">All</a></li>
+    </ul>
+</div>
+</body>
+
+
+</html>
