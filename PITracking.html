@@ -58,20 +58,29 @@ $( document ).ready(function() {
 
 	////////////////Event Listeners///////////
 
-	$('#currentLi').on('click',function(){
+	$(Document).find('#currentLi').on('click',function(){
 		alert('change');
+		$(document).find('#buttonStudies').html('Current <i class="icon-caret-down" ></i>');
 
 	});
+	$(Document).find('#HistoryLi').on('click',function(){
+		alert('change');
+		$(document).find('#buttonStudies').html('History <i class="icon-caret-down" ></i>');
+
+	});
+
 	//////////////////////////////////////////
-	$("#Since").datepicker();
+	$("#sinceI").datepicker();
   	$("#sinceIcon").click(function() { 
-    	$("#Since").datepicker( "show" );
+  		$("#sinceI").datepicker( "show" );
   	});
 	$('button').button();
 	submit= function(){
 		console.log('start submit');
 		$('#CSVTable').html("");
 		var data = {};
+		data.current = $("#dropdown-1 :selected").text();
+		data.db = $("#dropdown-2 :selected").text();
 		data.study = $(document).find('#studyI').val();
 		data.task = $(document).find('#taskI').val();
 		data.since = $(document).find('#sinceI').val();
@@ -125,7 +134,7 @@ $( document ).ready(function() {
 		</div>
 		<div id="enterStudy"  class="inline" style="padding-right:10px;">
 			<label>Since: </label>
-			<input id="sinceI" type="text" id="Since" readonly></input><i id="sinceIcon" class="icon-calendar"></i> 
+			<input id="sinceI" type="text" readonly></input><i id="sinceIcon" class="icon-calendar"></i> 
 		</div>
 		<div id="enterStudy"  class="inline" style="padding-right:10px;">
 			<label>Until: </label>
@@ -156,8 +165,8 @@ $( document ).ready(function() {
 
 					</div>
 				</div>
-				<button class="ui-button-primary"  data-dropdown="#dropdown-1">Current <i class="icon-caret-down" ></i></button>
-				<button class="ui-button-primary">Demo<i class="icon-caret-down" style="margin-left:2px;"></i></button>
+				<button class="ui-button-primary"  id="buttonStudies" data-dropdown="#dropdown-1">Current <i class="icon-caret-down" ></i></button>
+				<button class="ui-button-primary" data-dropdown="#dropdown-2" id="buttonDB">Demo<i class="icon-caret-down" style="margin-left:2px;"></i></button>
 				<button id="submit" onclick="submit()" class="ui-button-success" style="margin-left:20px;">Submit</button>
 			<p>
 			
@@ -178,6 +187,13 @@ $( document ).ready(function() {
         <li id="currentLi"><a href="#1">Current</a></li>
         <li id="HistoryLi"><a href="#2">History</a></li>
         <li id="AllLi"><a href="#3">All</a></li>
+    </ul>
+</div>
+<div id="dropdown-2" class="dropdown dropdown-tip">
+    <ul class="dropdown-menu">
+        <li id="DemoLi"><a href="#1">Demo</a></li>
+        <li id="ResearchLi"><a href="#2">Research</a></li>
+        <li id="BothLi"><a href="#3">Both</a></li>
     </ul>
 </div>
 </body>
