@@ -15,12 +15,13 @@
 <link type="text/css" rel="stylesheet" href="css/jquery.dropdown.css" />
 <link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
 	<!---------------------------------!-->
-<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+<script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
 
 <script src="js/jquery-ui-1.10.3.custom.js"></script>
 <script src="js/jquery.csvToTable.js"></script>
 <script type="text/javascript" src="js/tablesorter/jquery.tablesorter.js"></script> 
 <script type="text/javascript" src="js/jquery.dropdown.js"></script>
+<title>PI stats</title>
 <!-- Latest compiled and minified JavaScript -->
 <!--<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>!-->
 <style>
@@ -30,8 +31,8 @@
 
 .container{
 	margin-top:100px;
-	margin-left:20%;
-	margin-right:20%;
+	margin-left:15%;
+	margin-right:10%;
 	
 }
 
@@ -39,12 +40,26 @@
 	display:inline-block;
 	margin-left:2px;
 }
+#instruct1{
+	
+	font-family: "Times New Roman";
+	width:65%;
+	margin-bottom: 35px;
+
+}
+#instruct2{
+	
+	margin-top:15px;
+	margin-bottom:20px;
+}
 
 </style>
 <script>
 /////////Globals///////////
 var submit;
 var resultCVS;
+var dbChoise;
+var currentChoise;
 
 
 /////////Functions/////////
@@ -53,64 +68,283 @@ var resultCVS;
 
 </script>
 <script>
+
 $( document ).ready(function() {
 
 
-	////////////////Event Listeners///////////
-
-	$(Document).find('#currentLi').on('click',function(){
-		alert('change');
-		$(document).find('#buttonStudies').html('Current <i class="icon-caret-down" ></i>');
-
-	});
-	$(Document).find('#HistoryLi').on('click',function(){
-		alert('change');
-		$(document).find('#buttonStudies').html('History <i class="icon-caret-down" ></i>');
-
-	});
-
-	//////////////////////////////////////////
-	$("#sinceI").datepicker();
-  	$("#sinceIcon").click(function() { 
+	//Init////////////////////////
+	$("#sinceIcon").click(function() { 
   		$("#sinceI").datepicker( "show" );
   	});
+  	
+  	$("#untilIcon").click(function() { 
+  		$("#untilI").datepicker( "show" );
+  	});
+  	//////////////////////////////////////////
 	$('button').button();
-	submit= function(){
-		console.log('start submit');
-		$('#CSVTable').html("");
+	//////////////////////////////////////////
+	$('#studyC').prop('checked', true);
+	$("#sinceI").datepicker({defaultDate: '01/01/1985'});
+	$("#untilI").datepicker();
+	$('#timeTable').hide();
+	$("#buttonStudies").button("option", "disabled", true);
+	//$('#alert').css("display", "none");
+	$("#dialog").dialog({
+	    autoOpen: false,
+	    width: 600,
+	    modal: true,
+	    buttons: {
+	        'Cancel request' : function () {
+	            $(this).dialog("close");
+	        },
+	        'Continue with the request' : function () {
+	        	$(this).dialog("close");	
+	        	$('#CSVTable').html("");
+				$("#gif").css("display", "block");
+				$('#alert').css("display", "none");
+				var data = getData();
+				postForm(data);
+	        }
+	        
+	    }
+	});
+
+
+
+
+	////////////////////////////////
+	////////////////Event Listeners///////////
+
+	$('#taskI').on('change',function(){
+		var val = $('#taskI').val();
+		if (val!=''){
+			$('#taskC').prop('checked',true);
+		}else{
+			$('#taskC').prop('checked',false);
+		}
+	});
+	 $('#timeC').on('click',function(){
+		 if ($('#timeC').is(":checked")){
+		 	$('#monthC').prop('checked', true);
+		 	$('#weekC').prop('checked', false);
+		 	$('#dayC').prop('checked', false);
+		 	$('#yearC').prop('checked', false);
+			$('#timeTable').fadeIn();
+			
+		 }else{
+		 	
+		 	$('#timeTable').fadeOut();
+		 }
+		
+	 });
+	$(document).find('#currentLi').on('click',function(){
+		
+		$(document).find('#buttonStudies').html('<span class="ui-button-text">Current <i class="icon-caret-down" ></i>');
+		currentChoise='current;'
+
+	});
+	$(document).find('#HistoryLi').on('click',function(){
+		
+		$(document).find('#buttonStudies').html('<span class="ui-button-text">History <i class="icon-caret-down" ></i>');
+		currentChoise = 'history';
+
+	});
+	$(document).find('#AllLi').on('click',function(){
+		
+		$(document).find('#buttonStudies').html('<span class="ui-button-text">All <i class="icon-caret-down" ></i>');
+		currentChoise = 'all';
+
+	});
+	$(document).find('#DemoLi').on('click',function(){
+		
+		$(document).find('#dbButton').html('<span class="ui-button-text">Demo <i class="icon-caret-down" ></i>');
+		dbChoise='demo';
+		$("#buttonStudies").button("option", "disabled", true);
+
+	});
+	$(document).find('#ResearchLi').on('click',function(){
+		
+		$(document).find('#dbButton').html('<span class="ui-button-text">Research <i class="icon-caret-down" ></i>');
+		dbChoise = 'research';
+		$("#buttonStudies").button("option", "disabled", false);
+		
+		
+
+	});
+	$(document).find('#BothLi').on('click',function(){
+		
+		$(document).find('#dbButton').html('<span class="ui-button-text">Both <i class="icon-caret-down" ></i>');
+		dbChoise = 'both';
+		$("#buttonStudies").button("option", "disabled", true);
+
+
+	});
+	$('#dayC').on('click', function(){
+		if ($('#dayC').is(":checked")){
+			$('#weekC').prop('checked', false);
+			$('#monthC').prop('checked', false);
+			$('#yearC').prop('checked', false);
+		}
+	});
+	$('#weekC').on('click', function(){
+		if ($('#weekC').is(":checked")){
+			$('#dayC').prop('checked', false);
+			$('#monthC').prop('checked', false);
+			$('#yearC').prop('checked', false);
+		}
+	});
+	$('#monthC').on('click', function(){
+		if ($('#monthC').is(":checked")){
+			$('#weekC').prop('checked', false);
+			$('#dayC').prop('checked', false);
+			$('#yearC').prop('checked', false);
+		}
+	});
+	$('#yearC').on('click', function(){
+		if ($('#yearC').is(":checked")){
+			$('#weekC').prop('checked', false);
+			$('#monthC').prop('checked', false);
+			$('#dayC').prop('checked', false);
+		}
+	});
+
+	////////////////////start line//////////////
+	
+
+
+
+
+	//////////////////////////////////////
+        
+    /////////////////////////////////////////////////////    
+	/////////////////Date Picker/////////////////////////
+	
+  	
+	
+	getData = function(){
+
 		var data = {};
-		data.current = $("#dropdown-1 :selected").text();
-		data.db = $("#dropdown-2 :selected").text();
+		var curr = $(document).find('#buttonStudies').html();
+		var start = curr.indexOf('">');
+		var index = curr.indexOf('<i');
+		curr = curr.substr(start+2,index-start-3);
+		var db = $(document).find('#dbButton').html();
+		start = db.indexOf('">');
+		var index2 = db.indexOf('<i');
+		db = db.substr(start+2,index2-start-3);
+		data.current = curr;
+		data.db = db;
 		data.study = $(document).find('#studyI').val();
 		data.task = $(document).find('#taskI').val();
 		data.since = $(document).find('#sinceI').val();
 		data.until = $(document).find('#untilI').val();
 
-		if ($('#studyC').is(":checked")) data.studyc = 'true';
-		if ($('#taskC').is(":checked")) data.taskc = 'true';
-		if ($('#dataC').is(":checked")) data.datac = 'true';
-		if ($('#timeC').is(":checked")) data.timec = 'true';
-		if ($('#dayC').is(":checked")) data.dayc = 'true';
-		if ($('#weekC').is(":checked")) data.weekc = 'true';
-		if ($('#monthC').is(":checked")) data.monthc = 'true';
-		if ($('#yearC').is(":checked")) data.yearc = 'true';
+		if ($('#studyC').is(":checked")){
+			data.studyc = 'true';
+		}else{
+			data.studyc = '';
+		}
+		if ($('#taskC').is(":checked")){
+			data.taskc = 'true';
+		}else{
+			data.taskc = '';
+		}
+		if ($('#dataC').is(":checked")){
+			data.datac = 'true';
+		}else{
+			data.datac = '';
+		}
+		if ($('#timeC').is(":checked")){
+			data.timec = 'true';
+		}else{
+			data.timec = '';
+		}
+		if ($('#dayC').is(":checked")){
+			data.dayc = 'true';
+		}else{
+			data.dayc = '';
+		}
+		if ($('#weekC').is(":checked")){
+			data.weekc = 'true';
+		} else{
+			data.weekc = '';
+		}
+		if ($('#monthC').is(":checked")){
+			data.monthc = 'true';
+		}else{
+			data.monthc = '';
+		}
+		if ($('#yearC').is(":checked")){
+			data.yearc = 'true';
+		}else{
+			data.yearc = '';
 
+		}
 
-		
+		return data;
+
+	}
+
+	postForm = function(data){
+
 		$.post( '/implicit/PITracking', JSON.stringify(data))
 		.done(function( data ) {
 		  	resultCVS = data;
-		    //$('#result').val(data);
-		    $(function() {
-  				$('#CSVTable').CSVToTable(resultCVS,{
-  					tableClass:'tablesorter'
-  				}).bind("loadComplete",function() { 
-  					$('#CSVTable').find('#cvsT').addClass('tablesorter');
-  					$('#CSVTable').find('table').tablesorter();
-				});;
-			});
+		  	if (resultCVS!="\r\n" || resultCVS===undefined || resultCVS===null){
+		  		console.log(resultCVS);
+			    $('#result').val(data);
+			    console.log(resultCVS);
+			    $("#gif").css("display", "none");
+			    $(function() {
+	  				$('#CSVTable').CSVToTable(resultCVS,{
+	  					tableClass:'tablesorter'
+	  				}).bind("loadComplete",function() { 
+	  					$('#CSVTable').find('#cvsT').addClass('tablesorter');
+	  					$('#CSVTable').find('table').tablesorter();
+					});;
+				});
+
+		  	}else{
+		  		$("#gif").css("display", "none");
+		  		//$('#dialog').dialog('open');
+		  		$('#alert').css("display", "block");
+
+		  	}
+		  	
 		});
-	
+
+	}
+	isEmpty = function (value){
+		if (value==='') return true;
+		if (value===undefined) return true;
+		if (value===null) return true;
+		return false;
+	}
+	submit= function(){
+		console.log('start submit');
+		
+		var studyI = $(document).find('#studyI').val();
+		var taskI  = $(document).find('#taskI').val();
+		var sinceI = $(document).find('#sinceI').val();
+		var untilI = $(document).find('#untilI').val();
+		var curr = $(document).find('#buttonStudies').html();
+		var start = curr.indexOf('">');
+		var index = curr.indexOf('<i');
+		curr = curr.substr(start+2,index-start-3);
+
+		if(isEmpty(studyI) && isEmpty(taskI) && isEmpty(sinceI) && isEmpty(untilI) && curr!='Current'){
+
+			$('#dialog').dialog('open');
+
+		}else{
+			$('#CSVTable').html("");
+			$("#gif").css("display", "block");
+			$('#alert').css("display", "none");
+			var data = getData();
+			postForm(data);
+
+		}
+
 	}
 
 });
@@ -122,7 +356,12 @@ $( document ).ready(function() {
 
 
 <body>
+	
 <div class="container">
+	<div id="instruct1">
+		<font color="DarkGray">Select Demo or Research studies. If you select Research, select &quot;Current&quot; for studies using PI's participant pool right now, &quot;History&quot; for any study that has ever used PI&rsquo;s participant pool, and &quot;Any&quot; for any research study regardless of whether it has ever used PI&rsquo;s participant pool.</font>
+		
+	</div>
 	
 		<div id="enterStudy"  class="inline" style="padding-right:10px;">
 			<label>Enter Study </label>
@@ -134,12 +373,16 @@ $( document ).ready(function() {
 		</div>
 		<div id="enterStudy"  class="inline" style="padding-right:10px;">
 			<label>Since: </label>
-			<input id="sinceI" type="text" readonly></input><i id="sinceIcon" class="icon-calendar"></i> 
+			<input id="sinceI" type="text" ></input><i id="sinceIcon" class="icon-calendar" style="margin-left:5px;"></i> 
 		</div>
 		<div id="enterStudy"  class="inline" style="padding-right:10px;">
 			<label>Until: </label>
-			<input id="untilI" type="text" id="until" type="text" readonly></input><i class="icon-calendar"></i>
+			<input id="untilI" type="text" id="until" type="text" ></input><i id="untilIcon"  class="icon-calendar" style="margin-left:5px;"></i>
 		</div>
+		<button class="ui-button-primary" id="dbButton" data-dropdown="#dropdown-2" id="buttonDB">Demo <i class="icon-caret-down" style="margin-left:10px;"></i></button>
+		<button class="ui-button-primary "  id="buttonStudies" data-dropdown="#dropdown-1">Current <i class="icon-caret-down" ></i></button>
+		<button id="submit" onclick="submit()" class="ui-button-success" style="margin-left:10px;">Submit</button>
+
 		
 	
 		<div id="view" style="position:relative;left:-40px;">
@@ -147,34 +390,42 @@ $( document ).ready(function() {
 				<div style="display:inline-block;">
 					<ul style="list-style-type: none;">
     					<li><label>Show By: </label></li>
-    					<li><label>(or conbination of those)</label></li>
+    					<li><label>(or combination of those)</label></li>
     					
   					</ul>
   				</div>
   				<div style="display:inline-block;padding:10px;margin-left:20px;">
-					Study: <input id="studyC" type="checkbox" name="sports" value="soccer" style="margin-right:10px;"/>
-					Task: <input id="taskC" type="checkbox" name="sports" value="soccer" style="margin-right:10px;" />
-					Data Group: <input id="dataC" type="checkbox" name="sports" value="soccer" style="margin-right:10px;" />
-					Time: <input id="timeC" type="checkbox" name="sports" value="soccer" style="margin-right:10px;" />
-					<div  style="display:inline-block;border:1px solid;padding:10px;">
-						D: <input id="dayC" type="checkbox" name="sports" value="soccer"  />
-						W: <input id="weekC" type="checkbox" name="sports" value="soccer"  />
-						M: <input id="monthC" type="checkbox" name="sports" value="soccer"  />
-						Y: <input id="yearC" type="checkbox" name="sports" value="soccer"  />
+					<input id="studyC" type="checkbox" name="sports" value="soccer" style="margin-left:10px;"/> Study
+					<input id="taskC" type="checkbox" name="sports" value="soccer" style="margin-left:13px;" /> Task
+					<input id="dataC" type="checkbox" name="sports" value="soccer" style="margin-left:13px;" /> Data Group
+					<input id="timeC" type="checkbox" name="sports" value="soccer" style="margin-left:13px;" /> Time
+					<div id="timeTable" style="display:inline-block;border:1px solid;padding:10px;">
+						 <input id="dayC" type="checkbox" name="sports" value="soccer"  />D
+						 <input id="weekC" type="checkbox" name="sports" value="soccer"  />W
+						 <input id="monthC" type="checkbox" name="sports" value="soccer"  />M
+						 <input id="yearC" type="checkbox" name="sports" value="soccer"  />Y
 
 
 					</div>
 				</div>
-				<button class="ui-button-primary"  id="buttonStudies" data-dropdown="#dropdown-1">Current <i class="icon-caret-down" ></i></button>
-				<button class="ui-button-primary" data-dropdown="#dropdown-2" id="buttonDB">Demo<i class="icon-caret-down" style="margin-left:2px;"></i></button>
-				<button id="submit" onclick="submit()" class="ui-button-success" style="margin-left:20px;">Submit</button>
-			<p>
-			
+				
+				
 		</div>
 	
+	<div id="instruct2">
+		<font color="DarkGray">Enter the study id or any part of the study id. You can also enter the task name (or a part of the task name) if you want to see only specific tasks.</font>
+	</div>
+	<hr width="82%" align="left">
 	
 	<p>
-		<div id="CSVTable" ></div>
+		<div id="alert"class="ui-widget" style="display: none;width:82%;">
+		    <div class="ui-state-default ui-corner-all">
+		        <p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span>
+		             No data match your request.</p>
+		    </div>
+		</div>
+		<img id="gif" src="img/loading.gif"  style="display:none;margin-left:40%;">
+		<div id="CSVTable" style="width:82%"></div>
 	</p>
 
 </div>	
@@ -183,19 +434,25 @@ $( document ).ready(function() {
 
 
 <div id="dropdown-1" class="dropdown dropdown-tip">
-    <ul class="dropdown-menu">
+    <ul class="dropdown-menu" id="uldrop1">
         <li id="currentLi"><a href="#1">Current</a></li>
         <li id="HistoryLi"><a href="#2">History</a></li>
-        <li id="AllLi"><a href="#3">All</a></li>
+        <li id="AllLi"><a href="#3">Any</a></li>
     </ul>
 </div>
 <div id="dropdown-2" class="dropdown dropdown-tip">
-    <ul class="dropdown-menu">
+    <ul class="dropdown-menu" id="uldrop2">
         <li id="DemoLi"><a href="#1">Demo</a></li>
         <li id="ResearchLi"><a href="#2">Research</a></li>
         <li id="BothLi"><a href="#3">Both</a></li>
     </ul>
 </div>
+<div id="dialog" title="Search Limit">
+        <p><font size=2>This might take a while. Are you sure you do not want to enter any conditions to limit your search?</font></p>
+
+</div>
+
+
 </body>
 
 
