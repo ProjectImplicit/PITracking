@@ -60,6 +60,7 @@ var submit;
 var resultCVS;
 var dbChoise;
 var currentChoise;
+var lastTaskVal ='';
 
 
 /////////Functions/////////
@@ -84,10 +85,11 @@ $( document ).ready(function() {
 	$('button').button();
 	//////////////////////////////////////////
 	$('#studyC').prop('checked', true);
-	$("#sinceI").datepicker({defaultDate: '01/01/1985'});
+	//$("#sinceI").datepicker({defaultDate: '01/01/1985'});
+	$("#sinceI").datepicker();
 	$("#untilI").datepicker();
 	$('#timeTable').hide();
-	$("#buttonStudies").button("option", "disabled", true);
+	//$("#buttonStudies").button("option", "disabled", true);
 	//$('#alert').css("display", "none");
 	$("#dialog").dialog({
 	    autoOpen: false,
@@ -108,20 +110,33 @@ $( document ).ready(function() {
 	        
 	    }
 	});
+	$("#dialog2").dialog({
+	    autoOpen: false,
+	    width: 600,
+	    modal: true,
+	    buttons: {
+	        'Ok' : function () {
+	            $(this).dialog("close");
+	        }
+	    }
+	});
 
 
 
 
-	////////////////////////////////
-	////////////////Event Listeners///////////
+	
 
-	$('#taskI').on('change',function(){
+	$('#taskI').on('keyup',function(){
+		
 		var val = $('#taskI').val();
-		if (val!=''){
+		if (lastTaskVal==='' ){
+
 			$('#taskC').prop('checked',true);
-		}else{
-			$('#taskC').prop('checked',false);
-		}
+		 }
+		 lastTaskVal = val;
+		 //else{
+		// 	$('#taskC').prop('checked',false);
+		// }
 	});
 	 $('#timeC').on('click',function(){
 		 if ($('#timeC').is(":checked")){
@@ -151,13 +166,14 @@ $( document ).ready(function() {
 	});
 	$(document).find('#AllLi').on('click',function(){
 		
-		$(document).find('#buttonStudies').html('<span class="ui-button-text">All <i class="icon-caret-down" ></i>');
+		$(document).find('#buttonStudies').html('<span class="ui-button-text">Any <i class="icon-caret-down" ></i>');
 		currentChoise = 'all';
 
 	});
 	$(document).find('#DemoLi').on('click',function(){
 		
 		$(document).find('#dbButton').html('<span class="ui-button-text">Demo <i class="icon-caret-down" ></i>');
+		$(document).find('#buttonStudies').html('<span class="ui-button-text">Any <i class="icon-caret-down" ></i>');
 		dbChoise='demo';
 		$("#buttonStudies").button("option", "disabled", true);
 
@@ -165,6 +181,7 @@ $( document ).ready(function() {
 	$(document).find('#ResearchLi').on('click',function(){
 		
 		$(document).find('#dbButton').html('<span class="ui-button-text">Research <i class="icon-caret-down" ></i>');
+		$(document).find('#buttonStudies').html('<span class="ui-button-text">Current <i class="icon-caret-down" ></i>');
 		dbChoise = 'research';
 		$("#buttonStudies").button("option", "disabled", false);
 		
@@ -176,6 +193,7 @@ $( document ).ready(function() {
 		$(document).find('#dbButton').html('<span class="ui-button-text">Both <i class="icon-caret-down" ></i>');
 		dbChoise = 'both';
 		$("#buttonStudies").button("option", "disabled", true);
+		$('#dataC').prop('checked', true);
 
 
 	});
@@ -332,6 +350,11 @@ $( document ).ready(function() {
 		var index = curr.indexOf('<i');
 		curr = curr.substr(start+2,index-start-3);
 
+		if (isEmpty(studyI) && ($('#taskC').is(":checked")) && !($('#studyC').is(":checked"))){
+			$('#dialog2').dialog('open');
+			return;
+		}
+
 		if(isEmpty(studyI) && isEmpty(taskI) && isEmpty(sinceI) && isEmpty(untilI) && curr!='Current'){
 
 			$('#dialog').dialog('open');
@@ -362,6 +385,14 @@ $( document ).ready(function() {
 		<font color="DarkGray">Select Demo or Research studies. If you select Research, select &quot;Current&quot; for studies using PI's participant pool right now, &quot;History&quot; for any study that has ever used PI&rsquo;s participant pool, and &quot;Any&quot; for any research study regardless of whether it has ever used PI&rsquo;s participant pool.</font>
 		
 	</div>
+	<div>
+		<button class="ui-button-primary" id="dbButton" data-dropdown="#dropdown-2" id="buttonDB">Research <i class="icon-caret-down" style="margin-left:10px;"></i></button>
+		<button class="ui-button-primary "  id="buttonStudies" data-dropdown="#dropdown-1">Current <i class="icon-caret-down" ></i></button>
+		<button id="submit" onclick="submit()" class="ui-button-success" style="margin-left:10px;">Submit</button>
+	<div>
+	<div id="instruct2">
+		<font color="DarkGray">Enter the study id or any part of the study id. You can also enter the task name (or a part of the task name) if you want to see only specific tasks.</font>
+	</div>
 	
 		<div id="enterStudy"  class="inline" style="padding-right:10px;">
 			<label>Enter Study </label>
@@ -379,10 +410,7 @@ $( document ).ready(function() {
 			<label>Until: </label>
 			<input id="untilI" type="text" id="until" type="text" ></input><i id="untilIcon"  class="icon-calendar" style="margin-left:5px;"></i>
 		</div>
-		<button class="ui-button-primary" id="dbButton" data-dropdown="#dropdown-2" id="buttonDB">Demo <i class="icon-caret-down" style="margin-left:10px;"></i></button>
-		<button class="ui-button-primary "  id="buttonStudies" data-dropdown="#dropdown-1">Current <i class="icon-caret-down" ></i></button>
-		<button id="submit" onclick="submit()" class="ui-button-success" style="margin-left:10px;">Submit</button>
-
+		
 		
 	
 		<div id="view" style="position:relative;left:-40px;">
@@ -412,9 +440,7 @@ $( document ).ready(function() {
 				
 		</div>
 	
-	<div id="instruct2">
-		<font color="DarkGray">Enter the study id or any part of the study id. You can also enter the task name (or a part of the task name) if you want to see only specific tasks.</font>
-	</div>
+	
 	<hr width="82%" align="left">
 	
 	<p>
@@ -447,11 +473,14 @@ $( document ).ready(function() {
         <li id="BothLi"><a href="#3">Both</a></li>
     </ul>
 </div>
-<div id="dialog" title="Search Limit">
+<div id="dialog" title="Long search warning">
         <p><font size=2>This might take a while. Are you sure you do not want to enter any conditions to limit your search?</font></p>
 
 </div>
+<div id="dialog2" title="Study Name Missing">
+        <p><font size=2>Please Provide Study Name</font></p>
 
+</div>
 
 </body>
 
