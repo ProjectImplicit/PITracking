@@ -30,7 +30,7 @@
 }
 
 .container{
-	margin-top:100px;
+	margin-top:50px;
 	margin-left:15%;
 	margin-right:10%;
 	
@@ -121,10 +121,18 @@ $( document ).ready(function() {
 	    }
 	});
 
+	$("#dialog3").dialog({
+	    autoOpen: false,
+	    width: 600,
+	    modal: true,
+	    buttons: {
+	        'Ok' : function () {
+	            $(this).dialog("close");
+	        }
+	    }
+	});
 
 
-
-	
 
 	$('#taskI').on('keyup',function(){
 		
@@ -298,7 +306,7 @@ $( document ).ready(function() {
 			data.yearc = '';
 
 		}
-
+		data.testDB = 'warehouse';
 		return data;
 
 	}
@@ -308,7 +316,7 @@ $( document ).ready(function() {
 		$.post( '/implicit/PITracking', JSON.stringify(data))
 		.done(function( data ) {
 		  	resultCVS = data;
-		  	if (resultCVS!="\r\n" || resultCVS===undefined || resultCVS===null){
+		  	if (resultCVS!="\r\n" || resultCVS===undefined || resultCVS===null || resultCVS===''){
 		  		console.log(resultCVS);
 			    $('#result').val(data);
 			    console.log(resultCVS);
@@ -353,6 +361,13 @@ $( document ).ready(function() {
 		if (isEmpty(studyI) && ($('#taskC').is(":checked")) && !($('#studyC').is(":checked"))){
 			$('#dialog2').dialog('open');
 			return;
+		}
+		if ($('#timeC').is(":checked") && (!($('#sinceI').val()) || !($('#untilI').val())) ){
+
+			$('#dialog3').dialog('open');
+			return;
+
+
 		}
 
 		if(isEmpty(studyI) && isEmpty(taskI) && isEmpty(sinceI) && isEmpty(untilI) && curr!='Current'){
@@ -480,6 +495,9 @@ $( document ).ready(function() {
 <div id="dialog2" title="Study Name Missing">
         <p><font size=2>Please Provide Study Name</font></p>
 
+</div>
+<div id="dialog3" title="Study Name Missing">
+        <p><font size=2>Please Provide Since/Until Date</font></p>
 </div>
 
 </body>
