@@ -31,7 +31,7 @@
 
 .container{
 	margin-top:50px;
-	margin-left:15%;
+	margin-left:8%;
 	margin-right:10%;
 	
 }
@@ -61,6 +61,14 @@ var resultCVS;
 var dbChoise;
 var currentChoise;
 var lastTaskVal ='';
+var test = 'test';
+var ctrlMode = false; 
+var method='1';
+var refresh ='no';
+var curl='http://localhost/implicit/research/library/randomStudiesConfig/RandomStudiesConfig.xml';
+var hurl='http://localhost/implicit/research/library/randomStudiesConfig/HistoryRand.xml';
+var cpath='research/library/randomStudiesConfig/RandomStudiesConfig.xml';
+var hpath='research/library/randomStudiesConfig/HistoryRand.xml';
 
 
 /////////Functions/////////
@@ -120,6 +128,29 @@ $( document ).ready(function() {
 	        }
 	    }
 	});
+	$("#cpanel").dialog({
+	    autoOpen: false,
+	    width: 600,
+	    modal: true,
+	    buttons: {
+	        'Ok' : function () {
+	        	//alert($('#provider').val());
+	        	
+	        	/////////
+	        	if ( $('#provider').val()==='path') method='1';
+				if ( $('#provider').val()==='back') method='2';
+				if ( $('#provider').val()==='url') method='3';
+				refresh = $('#refresh').val();
+				test = $('#connect').val();
+				curl = $('#curl').val();
+				hurl = $('#hurl').val();
+				cpath = $('#cpath').val();
+				hpath = $('#hpath').val();
+				console.log('method: '+method+' connect: '+test+' refresh: '+refresh+' curl: '+curl+' hurl: '+hurl+' cpath: '+cpath+' hpath: '+hpath);
+	            $(this).dialog("close");
+	        }
+	    }
+	});
 
 	$("#dialog3").dialog({
 	    autoOpen: false,
@@ -131,9 +162,73 @@ $( document ).ready(function() {
 	        }
 	    }
 	});
+	$('#refresh').val(refresh);
+	if (method==='1') $('#provider').val('path');
+	if (method==='2') $('#provider').val('back');
+	if (method==='3') $('#provider').val('url');
+	$('#curl').val(curl);
+	$('#hurl').val(hurl);
+	$('#cpath').val(cpath);
+	$('#hpath').val(hpath);
+////////////////////////
+ 
+    ///this works
+    $(document).keydown(function(e){
+	    if(e.ctrlKey){
+	        ctrlMode = true;
+	    };
+    });
 
+    $(document).keyup(function(e){
+    	ctrlMode = false;
+    });
 
+	$(document).keydown(function(e){
+		
+			if (e.which==88){
+				if (ctrlMode===true){
+					if (test==='test'){
+	  				test='warehouse';
+	  				}else{
+	  					test='test';
+	  				} 
+	    			alert("changed connection to: "+test);	
+			}
+		}
+		
+	});
+	$(document).keydown(function(e){
 
+		
+
+			 if (e.which==77){
+
+			 	if (ctrlMode===true){
+			 		$('#cpanel').dialog('open');
+			 	}
+			 }
+
+			// 		if (method==='1'){
+	  // 					method='2';
+	  // 					alert("getting studies by using backend");
+	  // 				}else{
+	  // 					if (method==='2'){
+	  // 						method='3';
+	  // 						alert("getting studies by using URL");
+	  // 					}else{
+	  // 						if (method==='3'){
+	  // 							method='1';
+	  // 							alert("getting studies by using Path");	
+	  // 						}
+	  // 					}
+	  					
+	  // 				} 
+	    				
+			// }
+	//	}
+		
+	});
+	
 	$('#taskI').on('keyup',function(){
 		
 		var val = $('#taskI').val();
@@ -146,6 +241,10 @@ $( document ).ready(function() {
 		// 	$('#taskC').prop('checked',false);
 		// }
 	});
+
+
+
+
 	 $('#timeC').on('click',function(){
 		 if ($('#timeC').is(":checked")){
 		 	$('#monthC').prop('checked', true);
@@ -199,6 +298,7 @@ $( document ).ready(function() {
 	$(document).find('#BothLi').on('click',function(){
 		
 		$(document).find('#dbButton').html('<span class="ui-button-text">Both <i class="icon-caret-down" ></i>');
+		$(document).find('#buttonStudies').html('<span class="ui-button-text">Any <i class="icon-caret-down" ></i>');
 		dbChoise = 'both';
 		$("#buttonStudies").button("option", "disabled", true);
 		$('#dataC').prop('checked', true);
@@ -306,7 +406,14 @@ $( document ).ready(function() {
 			data.yearc = '';
 
 		}
-		data.testDB = 'warehouse';
+		data.testDB = test;
+		data.method = method;
+		data.refresh =refresh;
+		data.curl=curl;
+		data.hurl=hurl;
+		data.cpath=cpath;
+		data.hpath=hpath;
+		data.tasksM='3';
 		return data;
 
 	}
@@ -317,11 +424,12 @@ $( document ).ready(function() {
 		.done(function( data ) {
 		  	resultCVS = data;
 		  	if (resultCVS!="\r\n" || resultCVS===undefined || resultCVS===null || resultCVS===''){
-		  		console.log(resultCVS);
+		  		
 			    $('#result').val(data);
 			    console.log(resultCVS);
 			    $("#gif").css("display", "none");
 			    $(function() {
+
 	  				$('#CSVTable').CSVToTable(resultCVS,{
 	  					tableClass:'tablesorter'
 	  				}).bind("loadComplete",function() { 
@@ -364,8 +472,8 @@ $( document ).ready(function() {
 		}
 		if ($('#timeC').is(":checked") && (!($('#sinceI').val()) || !($('#untilI').val())) ){
 
-			$('#dialog3').dialog('open');
-			return;
+			// $('#dialog3').dialog('open');
+			// return;
 
 
 		}
@@ -498,6 +606,37 @@ $( document ).ready(function() {
 </div>
 <div id="dialog3" title="Study Name Missing">
         <p><font size=2>Please Provide Since/Until Date</font></p>
+</div>
+<div id="cpanel" title="Control Panel">
+        <p><font size=2>Study List Provider: </font>
+	        <select id="provider">
+	  			<option value="path">Path</option>
+	  			<option value="url">URL</option>
+	  			<option value="back">Backend</option>
+			</select>
+			&nbsp&nbsp
+			<font size=2>Caching: </font>
+			<select id="refresh">
+	  			<option value="no">No Caching</option>
+	  			<option value="1">1</option>
+			</select></br></br>
+			<font size=2>URL for Current Studies: </font>
+			<input id="curl" type="text" value="" style="width:400px;"> </input></br>
+			<font size=2>URL for History Studies: </font>
+			<input id="hurl" type="text" value="" style="width:400px;"></input></br>
+			<font size=2>Path for Current Studies: </font>		
+			<input id="cpath" type="text" value="" style="width:400px;"></input></br>
+			<font size=2>Path for History Studies: </font>		
+			<input id="hpath" type="text" value="" style="width:400px;"></input>
+
+		</p>
+		<p>
+			<font size=2>Connect to: </font></br>			
+			<select  id="connect">
+				<option value="test">Test</option>
+				<option value="warehouse">Old warehouse</option>
+			</select>
+
 </div>
 
 </body>
