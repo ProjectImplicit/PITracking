@@ -17,7 +17,8 @@
 	<!---------------------------------!-->
 <script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
 
-<script src="js/jquery-ui-1.10.3.custom.js"></script>
+<!--<script src="js/jquery-ui-1.10.3.custom.js"></script>!-->
+<script src="js/jquery-ui-1.10.3.custom.min.js"></script>
 <script src="js/jquery.csvToTable.js"></script>
 <script type="text/javascript" src="js/tablesorter/jquery.tablesorter.js"></script> 
 <script type="text/javascript" src="js/jquery.dropdown.js"></script>
@@ -34,6 +35,8 @@
 	margin-left:8%;
 	margin-right:10%;
 	
+	
+	
 }
 
 .ui-icon{
@@ -45,6 +48,7 @@
 	font-family: "Times New Roman";
 	width:65%;
 	margin-bottom: 35px;
+	display:none;
 
 }
 #instruct2{
@@ -52,24 +56,48 @@
 	margin-top:15px;
 	margin-bottom:20px;
 }
+#collapse{
+	width:107px;
+	height:22px;
+	position:absolute;
+	left:53%;
+	line-height:auto;
+	padding: 2px 10px 15px 10px;
+	border-radius: 7px;
+	/*margin-left:36%;*/
+
+
+
+}
 
 </style>
 <script>
 /////////Globals///////////
+var csv;
 var submit;
 var resultCVS;
 var dbChoise;
 var currentChoise;
 var lastTaskVal ='';
-var test = 'test';
+var lastStudyVal ='';
+var test = 'newwarehouse';
 var ctrlMode = false; 
-var method='1';
+var method='3';
 var refresh ='no';
-var curl='http://localhost/implicit/research/library/randomStudiesConfig/RandomStudiesConfig.xml';
-var hurl='http://localhost/implicit/research/library/randomStudiesConfig/HistoryRand.xml';
+var threads='yes';
+
+//var curl='http://dw2.psyc.virginia.edu/implicit/research/library/randomStudiesConfig/RandomStudiesConfig.xml';
+//var hurl='http://dw2.psyc.virginia.edu/implicit/research/library/randomStudiesConfig/HistoryRand.xml';
+//var cpath='research/library/randomStudiesConfig/RandomStudiesConfig.xml';
+//var hpath='research/library/randomStudiesConfig/HistoryRand.xml';
+//var baseURL='http://dw2.psyc.virginia.edu/implicit';
+var curl='http://app-dev-01.implicit.harvard.edu/implicit/research/library/randomStudiesConfig/RandomStudiesConfig.xml';
+var hurl='http://app-dev-01.implicit.harvard.edu/implicit/research/library/randomStudiesConfig/HistoryRand.xml';
 var cpath='research/library/randomStudiesConfig/RandomStudiesConfig.xml';
 var hpath='research/library/randomStudiesConfig/HistoryRand.xml';
-
+var baseURL='http://app-dev-01.implicit.harvard.edu/implicit';
+var threadsNum='3';
+var down=true;
 
 /////////Functions/////////
 
@@ -102,6 +130,7 @@ $( document ).ready(function() {
 	$("#dialog").dialog({
 	    autoOpen: false,
 	    width: 600,
+	    position: 'center',
 	    modal: true,
 	    buttons: {
 	        'Cancel request' : function () {
@@ -121,6 +150,7 @@ $( document ).ready(function() {
 	$("#dialog2").dialog({
 	    autoOpen: false,
 	    width: 600,
+	    position: 'center',
 	    modal: true,
 	    buttons: {
 	        'Ok' : function () {
@@ -131,6 +161,7 @@ $( document ).ready(function() {
 	$("#cpanel").dialog({
 	    autoOpen: false,
 	    width: 600,
+	    position: 'center',
 	    modal: true,
 	    buttons: {
 	        'Ok' : function () {
@@ -142,11 +173,14 @@ $( document ).ready(function() {
 				if ( $('#provider').val()==='url') method='3';
 				refresh = $('#refresh').val();
 				test = $('#connect').val();
+				threads = $('#threads').val();
 				curl = $('#curl').val();
 				hurl = $('#hurl').val();
 				cpath = $('#cpath').val();
 				hpath = $('#hpath').val();
-				console.log('method: '+method+' connect: '+test+' refresh: '+refresh+' curl: '+curl+' hurl: '+hurl+' cpath: '+cpath+' hpath: '+hpath);
+				threadsNum = $('#threadsNum').val();
+				baseURL = $('#baseURL').val();
+				console.log('method: '+method+' connect: '+test+' refresh: '+refresh+' curl: '+curl+' hurl: '+hurl+' cpath: '+cpath+' hpath: '+hpath+' threads: '+threads+ 'threadsNum '+threadsNum);
 	            $(this).dialog("close");
 	        }
 	    }
@@ -155,6 +189,7 @@ $( document ).ready(function() {
 	$("#dialog3").dialog({
 	    autoOpen: false,
 	    width: 600,
+	    position: 'center',
 	    modal: true,
 	    buttons: {
 	        'Ok' : function () {
@@ -166,10 +201,13 @@ $( document ).ready(function() {
 	if (method==='1') $('#provider').val('path');
 	if (method==='2') $('#provider').val('back');
 	if (method==='3') $('#provider').val('url');
+	if (test==='newwarehouse') $('#connect').val('newwarehouse');
 	$('#curl').val(curl);
 	$('#hurl').val(hurl);
 	$('#cpath').val(cpath);
 	$('#hpath').val(hpath);
+	$('#threadsNum').val(threadsNum);
+	$('#baseURL').val(baseURL);
 ////////////////////////
  
     ///this works
@@ -183,20 +221,21 @@ $( document ).ready(function() {
     	ctrlMode = false;
     });
 
-	$(document).keydown(function(e){
+	// $(document).keydown(function(e){
 		
-			if (e.which==88){
-				if (ctrlMode===true){
-					if (test==='test'){
-	  				test='warehouse';
-	  				}else{
-	  					test='test';
-	  				} 
-	    			alert("changed connection to: "+test);	
-			}
-		}
+	// 		if (e.which==88){
+	// 			if (ctrlMode===true){
+	// 				if (test==='test'){
+	//   				test='warehouse';
+	//   				}
+	//   				else{
+	//   					test='test';
+	//   				} 
+	//     			alert("changed connection to: "+test);	
+	// 		}
+	// 	}
 		
-	});
+	// });
 	$(document).keydown(function(e){
 
 		
@@ -229,6 +268,18 @@ $( document ).ready(function() {
 		
 	});
 	
+	$('#studyI').on('keyup',function(){
+
+		var val = $('#studyI').val();
+		if (lastStudyVal==='' ){
+
+			$('#studyC').prop('checked',true);
+		 }
+		 lastStudyVal = val;
+
+
+
+	});
 	$('#taskI').on('keyup',function(){
 		
 		var val = $('#taskI').val();
@@ -334,17 +385,30 @@ $( document ).ready(function() {
 		}
 	});
 
-	////////////////////start line//////////////
+	$('#collapse').on('click', function(){
+		
+		if (down==true){
+        $("#instruct1").slideDown("slow");
+        //$("#collapse span span").text('Show');
+
+        down=false;
+
+      }else{
+        $("#instruct1").slideUp("slow");
+        down=true;
+        //$("#collapse span span").text('Hide');
+
+      }
+
+	});
+
 	
+	download = function(){
+		var blob = new Blob([text], {type: "text/plain;charset=utf-8"});
+        var name = 'csv';
+        saveAs(blob,name+'.xml');
 
-
-
-
-	//////////////////////////////////////
-        
-    /////////////////////////////////////////////////////    
-	/////////////////Date Picker/////////////////////////
-	
+	}
   	
 	
 	getData = function(){
@@ -414,22 +478,42 @@ $( document ).ready(function() {
 		data.cpath=cpath;
 		data.hpath=hpath;
 		data.tasksM='3';
+		data.threads = threads;
+		data.threadsNum = threadsNum;
+		data.baseURL = baseURL;
 		return data;
 
 	}
 
+	takeCommasFromStudyID = function(csv){
+		// var lines =csv.split("\n");
+		// var commas = lines[0].split(",").length;
+		// for(var i = lines.length - 1; i >= 0; i--) {
+		// 	var line = lines[i];
+		// 	var lineCommas = line.split(",").length;
+		// 	if (lineCommas!=commas){
+		// 		lines.splice(i,1);
+				
+		// 	}
+		// }
+
+		//alert(csv);
+		//String line =
+	}
 	postForm = function(data){
 
 		$.post( '/implicit/PITracking', JSON.stringify(data))
 		.done(function( data ) {
 		  	resultCVS = data;
-		  	if (resultCVS!="\r\n" || resultCVS===undefined || resultCVS===null || resultCVS===''){
+		  	cvs = data;
+		  	takeCommasFromStudyID(resultCVS);
+		  	if (resultCVS!="\r\n" || resultCVS===undefined || resultCVS===null || resultCVS===''||resultCVS==':logger:'){
 		  		
 			    $('#result').val(data);
 			    console.log(resultCVS);
 			    $("#gif").css("display", "none");
 			    $(function() {
-
+			    	
 	  				$('#CSVTable').CSVToTable(resultCVS,{
 	  					tableClass:'tablesorter'
 	  				}).bind("loadComplete",function() { 
@@ -465,10 +549,35 @@ $( document ).ready(function() {
 		var start = curr.indexOf('">');
 		var index = curr.indexOf('<i');
 		curr = curr.substr(start+2,index-start-3);
-
-		if (isEmpty(studyI) && ($('#taskC').is(":checked")) && !($('#studyC').is(":checked"))){
-			$('#dialog2').dialog('open');
+		if(Date.parse(untilI)<Date.parse(sinceI)){ 
+			alert('Please enter correct dates');
 			return;
+		}
+		if (untilI=='') {
+			var currentdate = new Date(); 
+			var datetime =  (currentdate.getMonth()+1)+"/"+currentdate.getDate()+"/"+currentdate.getFullYear();
+			untilI= datetime;
+			$(document).find('#untilI').val(untilI);
+		}
+		if (sinceI==''){
+			 var currentdate = new Date(); 
+			 var datetime =  (currentdate.getMonth())+"/01/"+currentdate.getFullYear();
+
+			 sinceI = datetime;
+			 $(document).find('#sinceI').val(sinceI);
+		}
+		
+		if (isEmpty(studyI) && (curr=='History')){
+			//$('#dialog2').dialog('open');
+			//return;
+		}
+		if (isEmpty(studyI) && (curr=='Any')){
+			//$('#dialog').dialog('open');
+			//return;
+		}
+		if (curr=='History' && $('#taskC').is(":checked") ){
+			//alert('History studies are restricted to show by study only');
+			//return;
 		}
 		if ($('#timeC').is(":checked") && (!($('#sinceI').val()) || !($('#untilI').val())) ){
 
@@ -478,7 +587,7 @@ $( document ).ready(function() {
 
 		}
 
-		if(isEmpty(studyI) && isEmpty(taskI) && isEmpty(sinceI) && isEmpty(untilI) && curr!='Current'){
+		if(isEmpty(studyI) && curr=='Any'){
 
 			$('#dialog').dialog('open');
 
@@ -504,18 +613,29 @@ $( document ).ready(function() {
 <body>
 	
 <div class="container">
-	<div id="instruct1">
+	<!--<div id="instruct1">
 		<font color="DarkGray">Select Demo or Research studies. If you select Research, select &quot;Current&quot; for studies using PI's participant pool right now, &quot;History&quot; for any study that has ever used PI&rsquo;s participant pool, and &quot;Any&quot; for any research study regardless of whether it has ever used PI&rsquo;s participant pool.</font>
 		
-	</div>
+	</div>!-->
+	
 	<div>
 		<button class="ui-button-primary" id="dbButton" data-dropdown="#dropdown-2" id="buttonDB">Research <i class="icon-caret-down" style="margin-left:10px;"></i></button>
 		<button class="ui-button-primary "  id="buttonStudies" data-dropdown="#dropdown-1">Current <i class="icon-caret-down" ></i></button>
 		<button id="submit" onclick="submit()" class="ui-button-success" style="margin-left:10px;">Submit</button>
+		<button id="collapse" class="ui-button-primary" >Instructions <i class="icon-sort-down"></i></button>
 	<div>
+	</br></br>
+	<div id="instruct1" >
+		<font color="DarkGray">Choose whether you want participation data from the demo site, the research site, or both. You can also choose &quot;current&quot; (to get participation data from those studies that are in the pool right now), &quot;history&quot; (to get data from studies that have ever been in the research pool), or &quot;any&quot; (to get data from all research studies, regardless of whether or not they have ever been in the pool).</br></br>
+ 
+		Enter the study id or any part of the study id (the study name that that appears in an .expt file). Note that the study id search feature is case-sensitive. If you leave this box blank you will get data from all studies within your specified time period.</br></br>
+ 
+		You can also enter a task name or part of a task name (e.g., realstart) if you only want participation data from certain tasks. You can also choose how you want the data displayed. If you click &quot;Study&quot;, you will see data from any study that meets your search criteria. If you also check &quot;Task&quot; you will see data from any study that meets your search criteria separated out by task. The &quot;Data Group&quot; option will allow you to see whether a given study is coming from the demo or research site.</br></br> Please note that completion rates are calculated from the first to the last page of the study.</font>
+	</div>	
+	<!--
 	<div id="instruct2">
 		<font color="DarkGray">Enter the study id or any part of the study id. You can also enter the task name (or a part of the task name) if you want to see only specific tasks.</font>
-	</div>
+	</div> !-->
 	
 		<div id="enterStudy"  class="inline" style="padding-right:10px;">
 			<label>Enter Study </label>
@@ -563,7 +683,7 @@ $( document ).ready(function() {
 				
 		</div>
 	
-	
+	<button id="download" onclick="download()" class="ui-button-success" style="margin-left:10px;">Download CSV</button>
 	<hr width="82%" align="left">
 	
 	<p>
@@ -600,8 +720,8 @@ $( document ).ready(function() {
         <p><font size=2>This might take a while. Are you sure you do not want to enter any conditions to limit your search?</font></p>
 
 </div>
-<div id="dialog2" title="Study Name Missing">
-        <p><font size=2>Please Provide Study Name</font></p>
+<div id="dialog2" title="Study Name">
+        <p><font size=2>Please provide study name to restrict your search</font></p>
 
 </div>
 <div id="dialog3" title="Study Name Missing">
@@ -634,11 +754,23 @@ $( document ).ready(function() {
 			<font size=2>Connect to: </font></br>			
 			<select  id="connect">
 				<option value="test">Test</option>
-				<option value="warehouse">Old warehouse</option>
+				<option value="oldwarehouse">Old warehouse</option>
+				<option value="newwarehouse">New warehouse</option>
+
 			</select>
+		</p>
+		<p>
+			<font size=2>Use Threads: </font></br>			
+			<select  id="threads">
+				<option value="yes">Yes</option>
+				<option value="no">no</option>
+			</select><br/>
+			Number of Threads: <input id="threadsNum" type="text" value="3" style="width:200px;"> </input></br>
+			BaseURL: <input id="baseURL" type="text" value="" style="width:400px;"> </input></br>
+
 
 </div>
-
+<script type="text/javascript" src="js/FileSaver.js"></script>
 </body>
 
 

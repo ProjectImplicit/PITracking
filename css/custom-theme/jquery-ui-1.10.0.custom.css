@@ -850,6 +850,8 @@ button.ui-button::-moz-focus-inner { border: 0; padding: 0; } /* reset extra pad
   border-color: #0064cd #0064cd #003f81;
   border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
 }
+
+
 /* Fix problem with border in ui-state-active */
 .ui-menu .ui-menu-item a.ui-state-active {
   padding: 1px .4em;
