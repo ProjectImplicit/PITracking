@@ -65,15 +65,15 @@
 	padding: 2px 10px 15px 10px;
 	border-radius: 7px;
 	/*margin-left:36%;*/
-
-
-
 }
-
+#download{
+	
+}
 </style>
 <script>
 /////////Globals///////////
 var csv;
+var csvName;
 var submit;
 var resultCVS;
 var dbChoise;
@@ -101,14 +101,26 @@ var down=true;
 
 /////////Functions/////////
 
-
-
-</script>
-<script>
-
 $( document ).ready(function() {
 
-
+	function supportsSSE() {
+  		alert('no support for server side events');
+	}
+	var eventSource = new EventSource("/implicit/PITracking");
+	eventSource.onopen = function(event) {
+		//alert('connection established');
+		  // handle open event
+	};
+	eventSource.onmessage = function(event) {
+		console.log('message');
+  		//var data = event.data;
+  		//var origin = event.origin;
+  		//var lastEventId = event.lastEventId;
+  // handle message
+	};
+	eventSource.addEventListener('progress', function(event) {
+        $('.progress-bar').css('width', event.data+'%').attr('aria-valuenow', event.data);
+	}, false);
 	//Init////////////////////////
 	$("#sinceIcon").click(function() { 
   		$("#sinceI").datepicker( "show" );
@@ -158,6 +170,26 @@ $( document ).ready(function() {
 	        }
 	    }
 	});
+
+	$("#downloadDialog").dialog({
+	    autoOpen: false,
+	    width: 600,
+	    position: "top", 
+	    modal: true,
+	    buttons: {
+	        'Ok' : function () {
+	        	csvName = $('#downloadI').val();
+	        	var blob = new Blob([csv], {type: "text/plain;charset=utf-8"});
+        		saveAs(blob,csvName+'.csv');
+	            $(this).dialog("close");
+	        },
+	        'Cancel' : function () {
+	        	$(this).dialog("close");
+
+	        }
+	    }
+	});
+
 	$("#cpanel").dialog({
 	    autoOpen: false,
 	    width: 600,
@@ -221,51 +253,13 @@ $( document ).ready(function() {
     	ctrlMode = false;
     });
 
-	// $(document).keydown(function(e){
-		
-	// 		if (e.which==88){
-	// 			if (ctrlMode===true){
-	// 				if (test==='test'){
-	//   				test='warehouse';
-	//   				}
-	//   				else{
-	//   					test='test';
-	//   				} 
-	//     			alert("changed connection to: "+test);	
-	// 		}
-	// 	}
-		
-	// });
 	$(document).keydown(function(e){
+		 if (e.which==77){
 
-		
-
-			 if (e.which==77){
-
-			 	if (ctrlMode===true){
-			 		$('#cpanel').dialog('open');
-			 	}
-			 }
-
-			// 		if (method==='1'){
-	  // 					method='2';
-	  // 					alert("getting studies by using backend");
-	  // 				}else{
-	  // 					if (method==='2'){
-	  // 						method='3';
-	  // 						alert("getting studies by using URL");
-	  // 					}else{
-	  // 						if (method==='3'){
-	  // 							method='1';
-	  // 							alert("getting studies by using Path");	
-	  // 						}
-	  // 					}
-	  					
-	  // 				} 
-	    				
-			// }
-	//	}
-		
+		 	if (ctrlMode===true){
+		 		$('#cpanel').dialog('open');
+		 	}
+		 }
 	});
 	
 	$('#studyI').on('keyup',function(){
@@ -404,10 +398,8 @@ $( document ).ready(function() {
 
 	
 	download = function(){
-		var blob = new Blob([text], {type: "text/plain;charset=utf-8"});
-        var name = 'csv';
-        saveAs(blob,name+'.xml');
-
+		window.scrollTo(0,0);
+		$('#downloadDialog').dialog('open');
 	}
   	
 	
@@ -428,6 +420,8 @@ $( document ).ready(function() {
 		data.task = $(document).find('#taskI').val();
 		data.since = $(document).find('#sinceI').val();
 		data.until = $(document).find('#untilI').val();
+		data.endTask=$(document).find('#completedI').val();
+		data.filter = $(document).find('#filterI').val();
 
 		if ($('#studyC').is(":checked")){
 			data.studyc = 'true';
@@ -485,28 +479,49 @@ $( document ).ready(function() {
 
 	}
 
-	takeCommasFromStudyID = function(csv){
-		// var lines =csv.split("\n");
-		// var commas = lines[0].split(",").length;
-		// for(var i = lines.length - 1; i >= 0; i--) {
-		// 	var line = lines[i];
-		// 	var lineCommas = line.split(",").length;
-		// 	if (lineCommas!=commas){
-		// 		lines.splice(i,1);
-				
-		// 	}
-		// }
+	handleZero = function(csv){
 
-		//alert(csv);
-		//String line =
+		var AnelysedCSV='';
+		if( ($('#zero').is(':checked')) ){
+		
+			 var lines =csv.split("\n");
+			 var commas = lines[0].split(",");
+			 var index;
+			  for (var i=0;i<commas.length;i++){
+			  	if (commas[i]==='Started'){
+			  		index=i;
+			  	}
+			  }
+			  for(var i = lines.length - 1; i >= 0; i--) {
+			  	var line = lines[i];
+			  	var lineCommas = line.split(",");
+			  	var started  = lineCommas[index];
+			  	if (started==='0'){
+			  		lines.splice(i,1);
+					
+			  	}
+			  }
+			
+			for (var i=0;i<lines.length;i++){
+				AnelysedCSV += lines[i]+'\n';
+			}
+			return AnelysedCSV;
+		}else{
+			return csv;
+		}
+		
 	}
 	postForm = function(data){
 
 		$.post( '/implicit/PITracking', JSON.stringify(data))
 		.done(function( data ) {
+			if (data.indexOf('progress')!=-1){
+				var progress = data.split(':');
+				console.log(progress[0]);
+			}
 		  	resultCVS = data;
-		  	cvs = data;
-		  	takeCommasFromStudyID(resultCVS);
+		  	csv = data;
+		  	resultCVS = handleZero(resultCVS);
 		  	if (resultCVS!="\r\n" || resultCVS===undefined || resultCVS===null || resultCVS===''||resultCVS==':logger:'){
 		  		
 			    $('#result').val(data);
@@ -580,11 +595,8 @@ $( document ).ready(function() {
 			//return;
 		}
 		if ($('#timeC').is(":checked") && (!($('#sinceI').val()) || !($('#untilI').val())) ){
-
 			// $('#dialog3').dialog('open');
 			// return;
-
-
 		}
 
 		if(isEmpty(studyI) && curr=='Any'){
@@ -621,8 +633,11 @@ $( document ).ready(function() {
 	<div>
 		<button class="ui-button-primary" id="dbButton" data-dropdown="#dropdown-2" id="buttonDB">Research <i class="icon-caret-down" style="margin-left:10px;"></i></button>
 		<button class="ui-button-primary "  id="buttonStudies" data-dropdown="#dropdown-1">Current <i class="icon-caret-down" ></i></button>
+		<button id="download" onclick="download()" class="ui-button-primary ui-btn-sm" style="margin-left:10px;">Download CSV</button>
 		<button id="submit" onclick="submit()" class="ui-button-success" style="margin-left:10px;">Submit</button>
 		<button id="collapse" class="ui-button-primary" >Instructions <i class="icon-sort-down"></i></button>
+	    
+		
 	<div>
 	</br></br>
 	<div id="instruct1" >
@@ -642,8 +657,8 @@ $( document ).ready(function() {
 			<input id="studyI" type="text" id="studyName"></input>
 		</div>
 		<div id="enterStudy"  class="inline" style="padding-right:10px;">
-			<label>Enter Task </label>
-			<input id="taskI" type="text" id="taskName"></input>
+			<label>Filter By Task </label>
+			<input id="filterI" type="text" id="taskName"></input>
 		</div>
 		<div id="enterStudy"  class="inline" style="padding-right:10px;">
 			<label>Since: </label>
@@ -652,10 +667,15 @@ $( document ).ready(function() {
 		<div id="enterStudy"  class="inline" style="padding-right:10px;">
 			<label>Until: </label>
 			<input id="untilI" type="text" id="until" type="text" ></input><i id="untilIcon"  class="icon-calendar" style="margin-left:5px;"></i>
+		</div></br></br>
+		<div id="enterStarted"  class="inline" style="padding-right:10px;">
+			<label>Started: </label>
+			<input id="taskI" type="text" style="margin-left:30px;"></input>
+			<label style="margin-left:11px;">Completed: </label>
+			<input id="completedI" type="text" style="margin-left:21px;"></input>
 		</div>
 		
 		
-	
 		<div id="view" style="position:relative;left:-40px;">
 			<p>
 				<div style="display:inline-block;">
@@ -683,7 +703,7 @@ $( document ).ready(function() {
 				
 		</div>
 	
-	<button id="download" onclick="download()" class="ui-button-success" style="margin-left:10px;">Download CSV</button>
+	<div style="margin-top:2px;"><input id="zero" type="checkbox" name="sports" value="soccer"  />Hide Rows with Zero Started Sessions</div></br>
 	<hr width="82%" align="left">
 	
 	<p>
@@ -693,7 +713,12 @@ $( document ).ready(function() {
 		             No data match your request.</p>
 		    </div>
 		</div>
-		<img id="gif" src="img/loading.gif"  style="display:none;margin-left:40%;">
+		<!--<img id="gif" src="img/loading.gif"  style="display:none;margin-left:40%;">!-->
+		<div class="progress progress-striped">
+  			<div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100" style="width: 0%">
+    			<span class="sr-only">0% Complete</span>
+  			</div>
+		</div>
 		<div id="CSVTable" style="width:82%"></div>
 	</p>
 
@@ -722,6 +747,13 @@ $( document ).ready(function() {
 </div>
 <div id="dialog2" title="Study Name">
         <p><font size=2>Please provide study name to restrict your search</font></p>
+
+</div>
+<div id="downloadDialog" title="File Name">
+        <p>
+        	<font size=2>Please Provide File Name: </font>&nbsp&nbsp
+        	<input id="downloadI" type="text" value=""></input>
+        </p>
 
 </div>
 <div id="dialog3" title="Study Name Missing">
