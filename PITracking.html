@@ -1,39 +1,29 @@
 <html>
 <head>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<!--sources----------------------!-->
-
-<!-- Latest compiled and minified CSS -->
-<!--<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">!-->
-
-<!-- Optional theme -->
-<!--<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap-theme.min.css">!-->
 
 <link href="css/custom-theme/jquery-ui-1.10.0.custom.css" rel="stylesheet">
-<!--<link href="css/bootstrap.min.css" rel="stylesheet">!-->
 <link rel="stylesheet" href="js/tablesorter/themes/blue/style.css" type="text/css" id="" media="print, projection, screen" />
 <link type="text/css" rel="stylesheet" href="css/jquery.dropdown.css" />
-<link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
-	<!---------------------------------!-->
+<link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
 <script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
-
-<!--<script src="js/jquery-ui-1.10.3.custom.js"></script>!-->
 <script src="js/jquery-ui-1.10.3.custom.min.js"></script>
 <script src="js/jquery.csvToTable.js"></script>
 <script type="text/javascript" src="js/tablesorter/jquery.tablesorter.js"></script> 
 <script type="text/javascript" src="js/jquery.dropdown.js"></script>
 <title>PI stats</title>
-<!-- Latest compiled and minified JavaScript -->
-<!--<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>!-->
+
 <style>
 .inline{
 	display: inline-block;
 }
-
+input[type=text]{
+	width:120px;
+}
 .container{
 	margin-top:50px;
 	margin-left:8%;
-	margin-right:10%;
+	margin-right:8%;
 	
 	
 	
@@ -59,15 +49,30 @@
 #collapse{
 	width:107px;
 	height:22px;
-	position:absolute;
-	left:53%;
+	margin-left:0.6%;
 	line-height:auto;
 	padding: 2px 10px 15px 10px;
 	border-radius: 7px;
 	/*margin-left:36%;*/
 }
+.ui-tooltip {
+  background: white;
+  color: blue;
+  max-height: 0.8px;
+  font-size: 12px;
+ padding:10px;
+  
+}
+
+.tooltip{
+	padding:10px;
+	margin-bottom: 10px;
+}
 #download{
-	
+	width:120px;
+	height:22px;
+	line-height:auto;
+	padding: 2px 10px 15px 10px;
 }
 </style>
 <script>
@@ -98,29 +103,217 @@ var hpath='research/library/randomStudiesConfig/HistoryRand.xml';
 var baseURL='http://app-dev-01.implicit.harvard.edu/implicit';
 var threadsNum='3';
 var down=true;
+var history = [];
+var historyLimit =5;
+var historyIndex=0;
+var hostoryCurrent=0;
 
 /////////Functions/////////
 
 $( document ).ready(function() {
+	// $( '#historyLeft' ).tooltip({
+	// 	position: { my: "left top+15", at: "left bottom", collision: "flipfit" }
+	// 	//tooltipClass: "my-tooltip-styling" 
+	// 	 // open: function (event, ui) {
+ //   //       	ui.tooltip.css("max-height", "1px");
+ //   //   }
+	// });
+	//function supportsSSE() {
+  	//	alert('no support for server side events');
+	//};
+	//var eventSource = new EventSource("http://localhost/implicit/PITracking");
+	// eventSource.onopen = function(event) {
+	// 	//alert('connection established');
+	// 	  // handle open event
+	// };
+	//  eventSource.onmessage = function(event) {
+	//  	console.log('message');
+ //        if (event.type == 'progress') {
+ //        	console.log(evenet.data);
+ //        }
+	// };
+	$('#historyRight').on('click',function(){
 
-	function supportsSSE() {
-  		alert('no support for server side events');
-	}
-	var eventSource = new EventSource("/implicit/PITracking");
-	eventSource.onopen = function(event) {
-		//alert('connection established');
-		  // handle open event
-	};
-	eventSource.onmessage = function(event) {
-		console.log('message');
-  		//var data = event.data;
-  		//var origin = event.origin;
-  		//var lastEventId = event.lastEventId;
-  // handle message
-	};
-	eventSource.addEventListener('progress', function(event) {
-        $('.progress-bar').css('width', event.data+'%').attr('aria-valuenow', event.data);
-	}, false);
+		if (historyCurrent===historyIndex) return;
+		historyCurrent++;
+		var historyObj = history[historyCurrent-1];
+		var csv = historyObj.csv;
+		var data = historyObj.data;
+		if (data.db==='Research'){
+			$(document).find('#dbButton').html('<span class="ui-button-text">Research <i class="icon-caret-down" ></i>');
+		}
+		if (data.db==='Demo'){
+			$(document).find('#dbButton').html('<span class="ui-button-text">Demo <i class="icon-caret-down" ></i>');
+			$(document).find('#buttonStudies').html('<span class="ui-button-text">Any <i class="icon-caret-down" ></i>');
+			dbChoise='demo';
+			$("#buttonStudies").button("option", "disabled", true);
+		}
+		if (data.current==='Both'){
+			$(document).find('#dbButton').html('<span class="ui-button-text">Both <i class="icon-caret-down" ></i>');
+			$(document).find('#buttonStudies').html('<span class="ui-button-text">Any <i class="icon-caret-down" ></i>');
+			dbChoise = 'both';
+			$("#buttonStudies").button("option", "disabled", true);
+			$('#dataC').prop('checked', true);
+		}
+		if (data.current==='Current'){
+			$(document).find('#buttonStudies').html('<span class="ui-button-text">Current <i class="icon-caret-down" ></i>');
+		}
+		if (data.current==='History'){
+			$(document).find('#buttonStudies').html('<span class="ui-button-text">History <i class="icon-caret-down" ></i>');
+		}
+		if (data.current==='Any'){
+			$(document).find('#buttonStudies').html('<span class="ui-button-text">Any <i class="icon-caret-down" ></i>');
+		}
+		if (data.studyc === 'true'){
+			$('#studyC').prop('checked', true);
+		}else{
+			$('#studyC').prop('checked', false);
+		}
+		if (data.taskc === 'true'){
+			$('#taskC').prop('checked', true);
+		}else{
+			$('#taskC').prop('checked', false);
+		}
+		if (data.datac=== 'true'){
+			$('#dataC').prop('checked', true);
+		}else{
+			$('#dataC').prop('checked', false);
+		}
+		if (data.timec=== 'true'){
+			$('#timeC').prop('checked', true);
+			$('#timeTable').fadeIn();
+		}else{
+			$('#timeC').prop('checked', false);
+			$('#timeTable').fadeOut();
+		}
+		if (data.dayc ==='true'){
+			$('#dayC').prop('checked', true);
+		}else{
+			$('#dayC').prop('checked', false);
+		}
+		if (data.weekc=== 'true'){
+			$('#weekC').prop('checked', true);
+		}else{
+			$('#weekC').prop('checked', false);
+		}
+		if (data.monthc=== 'true'){
+			$('#monthC').prop('checked', true);
+		}else{
+			$('#monthC').prop('checked', false);
+		}
+		if (data.yearc ==='true'){
+			$('#yearC').prop('checked', true);
+		}else{
+			$('#yearC').prop('checked', false);
+		}
+		if (data.zero ==='true'){
+			$('#zero').prop('checked', true);
+		}else{
+			$('#zero').prop('checked', false);
+		}
+		
+		$(document).find('#studyI').val(data.study);
+		$(document).find('#taskI').val(data.task);
+		$(document).find('#sinceI').val(data.since);
+		$(document).find('#untilI').val(data.until);
+		$(document).find('#completedI').val(data.endTask);
+		$(document).find('#filterI').val(data.filter);
+		setTable(csv);
+		resultCVS= csv;
+	});
+	$('#historyLeft').on('click',function(){
+		if (historyCurrent===1) return;
+		historyCurrent--;
+		var historyObj = history[historyCurrent-1];
+		var csv = historyObj.csv;
+		var data = historyObj.data;
+		if (data.db==='Research'){
+			$(document).find('#dbButton').html('<span class="ui-button-text">Research <i class="icon-caret-down" ></i>');
+		}
+		if (data.db==='Demo'){
+			$(document).find('#dbButton').html('<span class="ui-button-text">Demo <i class="icon-caret-down" ></i>');
+			$(document).find('#buttonStudies').html('<span class="ui-button-text">Any <i class="icon-caret-down" ></i>');
+			dbChoise='demo';
+			$("#buttonStudies").button("option", "disabled", true);
+		}
+		if (data.current==='Both'){
+			$(document).find('#dbButton').html('<span class="ui-button-text">Both <i class="icon-caret-down" ></i>');
+			$(document).find('#buttonStudies').html('<span class="ui-button-text">Any <i class="icon-caret-down" ></i>');
+			dbChoise = 'both';
+			$("#buttonStudies").button("option", "disabled", true);
+			$('#dataC').prop('checked', true);
+		}
+		if (data.current==='Current'){
+			$(document).find('#buttonStudies').html('<span class="ui-button-text">Current <i class="icon-caret-down" ></i>');
+			$("#buttonStudies").button("option", "disabled", false);
+		}
+		if (data.current==='History'){
+			$(document).find('#buttonStudies').html('<span class="ui-button-text">History <i class="icon-caret-down" ></i>');
+			$("#buttonStudies").button("option", "disabled", false);
+		}
+		if (data.current==='Any'){
+			$(document).find('#buttonStudies').html('<span class="ui-button-text">Any <i class="icon-caret-down" ></i>');
+		}
+		if (data.studyc === 'true'){
+			$('#studyC').prop('checked', true);
+		}else{
+			$('#studyC').prop('checked', false);
+		}
+		if (data.taskc === 'true'){
+			$('#taskC').prop('checked', true);
+		}else{
+			$('#taskC').prop('checked', false);
+		}
+		if (data.datac=== 'true'){
+			$('#dataC').prop('checked', true);
+		}else{
+			$('#dataC').prop('checked', false);
+		}
+		if (data.timec=== 'true'){
+			$('#timeC').prop('checked', true);
+			$('#timeTable').fadeIn();
+		}else{
+			$('#timeC').prop('checked', false);
+			$('#timeTable').fadeOut();
+
+		}
+		if (data.dayc ==='true'){
+			$('#dayC').prop('checked', true);
+		}else{
+			$('#dayC').prop('checked', false);
+		}
+		if (data.weekc=== 'true'){
+			$('#weekC').prop('checked', true);
+		}else{
+			$('#weekC').prop('checked', false);
+		}
+		if (data.monthc=== 'true'){
+			$('#monthC').prop('checked', true);
+		}else{
+			$('#monthC').prop('checked', false);
+		}
+		if (data.yearc ==='true'){
+			$('#yearC').prop('checked', true);
+		}else{
+			$('#yearC').prop('checked', false);
+		}
+		if (data.zero ==='true'){
+			$('#zero').prop('checked', true);
+		}else{
+			$('#zero').prop('checked', false);
+		}
+		$(document).find('#studyI').val(data.study);
+		$(document).find('#taskI').val(data.task);
+		$(document).find('#sinceI').val(data.since);
+		$(document).find('#untilI').val(data.until);
+		$(document).find('#completedI').val(data.endTask);
+		$(document).find('#filterI').val(data.filter);
+		setTable(csv);
+		resultCVS= csv;
+	});
+	// eventSource.addEventListener('progress', function(event) {
+ //        $('.progress-bar').css('width', event.data+'%').attr('aria-valuenow', event.data);
+	// }, false);
 	//Init////////////////////////
 	$("#sinceIcon").click(function() { 
   		$("#sinceI").datepicker( "show" );
@@ -139,6 +332,20 @@ $( document ).ready(function() {
 	$('#timeTable').hide();
 	//$("#buttonStudies").button("option", "disabled", true);
 	//$('#alert').css("display", "none");
+	// $( "#historyLeft" ).tooltip({
+	//     position: {
+	//         my: "center top+15",
+	//         at: "center bottom",
+	//         using: function( position, feedback ) {
+	//             $( this ).css( position );
+	//             $( "&lt;div&gt;" )
+	//             .addClass( "arrow top" )
+	//             .addClass( feedback.vertical )
+	//             .addClass( feedback.horizontal )
+	//             .appendTo( this );
+	//         }
+	//     }
+	// });
 	$("#dialog").dialog({
 	    autoOpen: false,
 	    width: 600,
@@ -179,7 +386,7 @@ $( document ).ready(function() {
 	    buttons: {
 	        'Ok' : function () {
 	        	csvName = $('#downloadI').val();
-	        	var blob = new Blob([csv], {type: "text/plain;charset=utf-8"});
+	        	var blob = new Blob([resultCVS], {type: "text/plain;charset=utf-8"});
         		saveAs(blob,csvName+'.csv');
 	            $(this).dialog("close");
 	        },
@@ -262,7 +469,7 @@ $( document ).ready(function() {
 		 }
 	});
 	
-	$('#studyI').on('keyup',function(){
+	$('#filterI').on('keyup',function(){
 
 		var val = $('#studyI').val();
 		if (lastStudyVal==='' ){
@@ -274,18 +481,16 @@ $( document ).ready(function() {
 
 
 	});
-	$('#taskI').on('keyup',function(){
+	// $('#taskI').on('keyup',function(){
 		
-		var val = $('#taskI').val();
-		if (lastTaskVal==='' ){
+	// 	var val = $('#taskI').val();
+	// 	if (lastTaskVal==='' ){
 
-			$('#taskC').prop('checked',true);
-		 }
-		 lastTaskVal = val;
-		 //else{
-		// 	$('#taskC').prop('checked',false);
-		// }
-	});
+	// 		$('#taskC').prop('checked',true);
+	// 	 }
+	// 	 lastTaskVal = val;
+		
+	// });
 
 
 
@@ -464,6 +669,12 @@ $( document ).ready(function() {
 			data.yearc = '';
 
 		}
+		if ($('#zero').is(":checked")){
+			data.zero = 'true';
+		}else{
+			data.zero = '';
+
+		}
 		data.testDB = test;
 		data.method = method;
 		data.refresh =refresh;
@@ -511,32 +722,39 @@ $( document ).ready(function() {
 		}
 		
 	}
-	postForm = function(data){
+	setHistory = function(csv,data){
+		var historyObj={};
+		historyObj.csv = csv;
+		historyObj.data = data;
+		history.push(historyObj);
+		historyIndex++;
+		historyCurrent=historyIndex;
 
-		$.post( '/implicit/PITracking', JSON.stringify(data))
+	}
+	postForm = function(Reqdata){
+
+		$.post( '/implicit/PITracking', JSON.stringify(Reqdata))
 		.done(function( data ) {
-			if (data.indexOf('progress')!=-1){
-				var progress = data.split(':');
-				console.log(progress[0]);
-			}
+			
 		  	resultCVS = data;
-		  	csv = data;
+		  	//csv = data;
 		  	resultCVS = handleZero(resultCVS);
+		  	setHistory(resultCVS,Reqdata);
 		  	if (resultCVS!="\r\n" || resultCVS===undefined || resultCVS===null || resultCVS===''||resultCVS==':logger:'){
 		  		
 			    $('#result').val(data);
 			    console.log(resultCVS);
 			    $("#gif").css("display", "none");
-			    $(function() {
+			 //    $(function() {
 			    	
-	  				$('#CSVTable').CSVToTable(resultCVS,{
-	  					tableClass:'tablesorter'
-	  				}).bind("loadComplete",function() { 
-	  					$('#CSVTable').find('#cvsT').addClass('tablesorter');
-	  					$('#CSVTable').find('table').tablesorter();
-					});;
-				});
-
+	  	// 			$('#CSVTable').CSVToTable(resultCVS,{
+	  	// 				tableClass:'tablesorter'
+	  	// 			}).bind("loadComplete",function() { 
+	  	// 				$('#CSVTable').find('#cvsT').addClass('tablesorter');
+	  	// 				$('#CSVTable').find('table').tablesorter();
+				// 	});
+				// });
+				setTable(resultCVS);
 		  	}else{
 		  		$("#gif").css("display", "none");
 		  		//$('#dialog').dialog('open');
@@ -546,6 +764,14 @@ $( document ).ready(function() {
 		  	
 		});
 
+	}
+	setTable = function(resultCVS){
+		$('#CSVTable').CSVToTable(resultCVS,{
+ 				tableClass:'tablesorter'
+    			}).bind("loadComplete",function() { 
+ 				$('#CSVTable').find('#cvsT').addClass('tablesorter');
+ 				$('#CSVTable').find('table').tablesorter();
+	 	});
 	}
 	isEmpty = function (value){
 		if (value==='') return true;
@@ -633,59 +859,68 @@ $( document ).ready(function() {
 	<div>
 		<button class="ui-button-primary" id="dbButton" data-dropdown="#dropdown-2" id="buttonDB">Research <i class="icon-caret-down" style="margin-left:10px;"></i></button>
 		<button class="ui-button-primary "  id="buttonStudies" data-dropdown="#dropdown-1">Current <i class="icon-caret-down" ></i></button>
-		<button id="download" onclick="download()" class="ui-button-primary ui-btn-sm" style="margin-left:10px;">Download CSV</button>
-		<button id="submit" onclick="submit()" class="ui-button-success" style="margin-left:10px;">Submit</button>
-		<button id="collapse" class="ui-button-primary" >Instructions <i class="icon-sort-down"></i></button>
-	    
 		
+		<button id="submit" onclick="submit()" class="ui-button-success" style="margin-left:10px;">Submit</button>
+		<div style="margin-left:28%;display:inline">
+			<i id="historyLeft" style="color:#3333CC;" class="fa fa-caret-square-o-left" title="backward"></i>
+			<i id="historyRight" style="color:#3333CC;margin-left:4px;" class="fa fa-caret-square-o-right" title="forward"></i>
+		</div>
+		
+		<button id="collapse" class="ui-button-primary" >Instructions <i class="icon-sort-down"></i></button>
+	 
 	<div>
-	</br></br>
+	
+	
+	
 	<div id="instruct1" >
 		<font color="DarkGray">Choose whether you want participation data from the demo site, the research site, or both. You can also choose &quot;current&quot; (to get participation data from those studies that are in the pool right now), &quot;history&quot; (to get data from studies that have ever been in the research pool), or &quot;any&quot; (to get data from all research studies, regardless of whether or not they have ever been in the pool).</br></br>
  
 		Enter the study id or any part of the study id (the study name that that appears in an .expt file). Note that the study id search feature is case-sensitive. If you leave this box blank you will get data from all studies within your specified time period.</br></br>
  
-		You can also enter a task name or part of a task name (e.g., realstart) if you only want participation data from certain tasks. You can also choose how you want the data displayed. If you click &quot;Study&quot;, you will see data from any study that meets your search criteria. If you also check &quot;Task&quot; you will see data from any study that meets your search criteria separated out by task. The &quot;Data Group&quot; option will allow you to see whether a given study is coming from the demo or research site.</br></br> Please note that completion rates are calculated from the first to the last page of the study.</font>
+		You can also enter a task name or part of a task name (e.g., realstart) if you only want participation data from certain tasks. You can also choose how you want the data displayed. If you click &quot;Study&quot;, you will see data from any study that meets your search criteria. If you also check &quot;Task&quot; you will see data from any study that meets your search criteria separated out by task. The &quot;Data Group&quot; option will allow you to see whether a given study is coming from the demo or research site.</br></br>
+
+		You can define how completion rate is calculated by setting &quot;start&quot; and &quot;completed&quot;. Only studies that visited those tasks would be used in the calculation.</font>
 	</div>	
 	<!--
 	<div id="instruct2">
 		<font color="DarkGray">Enter the study id or any part of the study id. You can also enter the task name (or a part of the task name) if you want to see only specific tasks.</font>
 	</div> !-->
+	</br>
 	
-		<div id="enterStudy"  class="inline" style="padding-right:10px;">
-			<label>Enter Study </label>
-			<input id="studyI" type="text" id="studyName"></input>
-		</div>
-		<div id="enterStudy"  class="inline" style="padding-right:10px;">
-			<label>Filter By Task </label>
-			<input id="filterI" type="text" id="taskName"></input>
-		</div>
-		<div id="enterStudy"  class="inline" style="padding-right:10px;">
-			<label>Since: </label>
-			<input id="sinceI" type="text" ></input><i id="sinceIcon" class="icon-calendar" style="margin-left:5px;"></i> 
-		</div>
-		<div id="enterStudy"  class="inline" style="padding-right:10px;">
-			<label>Until: </label>
-			<input id="untilI" type="text" id="until" type="text" ></input><i id="untilIcon"  class="icon-calendar" style="margin-left:5px;"></i>
-		</div></br></br>
-		<div id="enterStarted"  class="inline" style="padding-right:10px;">
-			<label>Started: </label>
-			<input id="taskI" type="text" style="margin-left:30px;"></input>
-			<label style="margin-left:11px;">Completed: </label>
-			<input id="completedI" type="text" style="margin-left:21px;"></input>
-		</div>
-		
-		
-		<div id="view" style="position:relative;left:-40px;">
-			<p>
+	<div >
+
+		<span style="font-style:italic;">Read by: </span></br>
+			<div style="margin-top:8px;">
+				<div id="enterStudy"  class="inline" style="padding-right:10px;">
+					<label>Study Name: </label>
+					<input id="studyI" type="text" id="studyName"></input>
+				</div>
+				<div id="enterStudy"  class="inline" style="padding-right:10px;">
+					<label>Task Name: </label>
+					<input id="filterI" type="text" id="taskName"></input>
+				</div>
+				<div id="enterStudy"  class="inline" style="padding-right:10px;">
+					<label>Since: </label>
+					<input id="sinceI" type="text" style="margin-left:39px;"></input><i id="sinceIcon" class="icon-calendar" style="margin-left:5px;"></i> 
+				</div>
+				<div id="enterStudy"  class="inline" style="padding-right:10px;">
+					<label>Until: </label>
+					<input id="untilI" type="text" id="until" type="text" ></input><i id="untilIcon"  class="icon-calendar" style="margin-left:5px;"></i>
+				</div>
+			</div>
+	<div>
+	
+	<span id="view" style="position:relative;left:-40px;top:4px;">
+			
 				<div style="display:inline-block;">
 					<ul style="list-style-type: none;">
-    					<li><label>Show By: </label></li>
-    					<li><label>(or combination of those)</label></li>
+    					<li><span style="font-style:italic;">Show by (or combination of those): </span></li>
+    					<!--<li><label>(or combination of those)</label></li>!-->
     					
   					</ul>
   				</div>
-  				<div style="display:inline-block;padding:10px;margin-left:20px;">
+  			
+  				<div style="display:inline-block;padding:10px;margin-left:20px;margin-top:-10px;">
 					<input id="studyC" type="checkbox" name="sports" value="soccer" style="margin-left:10px;"/> Study
 					<input id="taskC" type="checkbox" name="sports" value="soccer" style="margin-left:13px;" /> Task
 					<input id="dataC" type="checkbox" name="sports" value="soccer" style="margin-left:13px;" /> Data Group
@@ -696,15 +931,40 @@ $( document ).ready(function() {
 						 <input id="monthC" type="checkbox" name="sports" value="soccer"  />M
 						 <input id="yearC" type="checkbox" name="sports" value="soccer"  />Y
 
-
 					</div>
 				</div>
-				
-				
+
+		</span>
+		
+	<div style="margin-top:12px;">
+		<div style="display:inline;">
+			<span style="font-style:italic;">Compute completion:  </span>
 		</div>
-	
-	<div style="margin-top:2px;"><input id="zero" type="checkbox" name="sports" value="soccer"  />Hide Rows with Zero Started Sessions</div></br>
-	<hr width="82%" align="left">
+		
+		<div id="enterStarted"  class="inline" style="margin-left:80px;">
+			<label>First Task: </label>
+			<input id="taskI" type="text" style="margin-left:8px;"></input>
+			<label style="margin-left:10px;">Last Task: </label>
+			<input id="completedI" type="text" style="margin-left:8px;"></input>
+		</div>
+		
+</div>		
+		
+		<div style="margin-top:17px;">
+			<span style="font-style:italic;">More options: </span>
+			<div style="display:inline">
+				
+					
+				
+				<div style="margin-top:2px;display: inline;"><input id="zero" type="checkbox" name="sports" value="soccer"  />Hide Rows with Zero Started Sessions</div>
+				<button id="download" onclick="download()" class="ui-button-primary ui-btn-sm" style="margin-left:10px; display:inline;">Download CSV</button>
+				</br>
+			</div>
+		</div>
+		
+
+	<hr width="70%" align="left" style="margin-top:17px;"><!-- hr line ! -->
+
 	
 	<p>
 		<div id="alert"class="ui-widget" style="display: none;width:82%;">
@@ -713,12 +973,12 @@ $( document ).ready(function() {
 		             No data match your request.</p>
 		    </div>
 		</div>
-		<!--<img id="gif" src="img/loading.gif"  style="display:none;margin-left:40%;">!-->
-		<div class="progress progress-striped">
+		<img id="gif" src="img/loading.gif"  style="display:none;margin-left:40%;">
+		<!--<div class="progress progress-striped">
   			<div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100" style="width: 0%">
     			<span class="sr-only">0% Complete</span>
   			</div>
-		</div>
+		</div>!-->
 		<div id="CSVTable" style="width:82%"></div>
 	</p>
 
