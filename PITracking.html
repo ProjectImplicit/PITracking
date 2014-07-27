@@ -103,7 +103,7 @@ var hpath='research/library/randomStudiesConfig/HistoryRand.xml';
 var baseURL='http://app-dev-01.implicit.harvard.edu/implicit';
 var threadsNum='3';
 var down=true;
-var history = [];
+var pihistory = [];
 var historyLimit =5;
 var historyIndex=0;
 var hostoryCurrent=0;
@@ -136,7 +136,7 @@ $( document ).ready(function() {
 
 		if (historyCurrent===historyIndex) return;
 		historyCurrent++;
-		var historyObj = history[historyCurrent-1];
+		var historyObj = pihistory[historyCurrent-1];
 		var csv = historyObj.csv;
 		var data = historyObj.data;
 		if (data.db==='Research'){
@@ -224,7 +224,7 @@ $( document ).ready(function() {
 	$('#historyLeft').on('click',function(){
 		if (historyCurrent===1) return;
 		historyCurrent--;
-		var historyObj = history[historyCurrent-1];
+		var historyObj = pihistory[historyCurrent-1];
 		var csv = historyObj.csv;
 		var data = historyObj.data;
 		if (data.db==='Research'){
@@ -726,7 +726,9 @@ $( document ).ready(function() {
 		var historyObj={};
 		historyObj.csv = csv;
 		historyObj.data = data;
-		history.push(historyObj);
+		//var length = pihistory.length;
+		//pihistory[length] = historyObj;
+		pihistory.push(historyObj);
 		historyIndex++;
 		historyCurrent=historyIndex;
 
