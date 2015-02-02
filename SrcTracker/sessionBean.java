@@ -1,27 +1,7 @@
-package org.uva.tracker;
+package org.uva.util;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-
-
-/**
- * 
- *  
- * 
- * Holds information about a session
- * 
- * 
- * Date created : 01-Feb-2014
- * 
- * @version $Revision: 10716 $
- * 
- * @author Ben G 
- * 
- * 
- * 
- */
-
-
 
 public class sessionBean {
 	

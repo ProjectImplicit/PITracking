@@ -1,7 +1,4 @@
-
-
-
-package org.uva.tracker;
+package org.uva.util;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -12,6 +9,7 @@ import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URL;
+import java.sql.ResultSet;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -22,39 +20,37 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+
+import javax.mail.*;
+
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+
+import org.implicit.RegisteredUserDAO;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.uva.Implicit;
+import org.uva.dao.oracle.PITrackingDAO;
+import org.uva.dao.oracle.TaskDAO;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
+
 import edu.yale.its.util.ChainedException;
 
-
-
-/**
- * 
- *  
- * 
- * Main servlet controller. 
- * 
- * The Servlet recieves requests from the client and
- * 
- * Return responce in the form of CSV.
- * 
- * Date created : 01-Feb-2014
- * 
- * @version $Revision: 10716 $
- * 
- * @author Ben G 
- * 
- * 
- * 
- */
+import org.apache.log4j.*;
+import org.implicit.random.RandomStudyManager;
+import org.implicit.random.RandomStudyConfigReader;
+//import org.implicit.Implicit;
 
 
 public class PITracking  extends HttpServlet{
@@ -69,20 +65,6 @@ public class PITracking  extends HttpServlet{
 			e.printStackTrace();
 		}
 	} 
-	
-	/**
-	 * 
-	 * Handel POST saves request parameters in HashMap.
-	 * Returns the Data requested in CSV Form
-	 * 
-	 * 	 
-	 * @param 
-	 * 			request and response sevlet objects.
-	 *            
-	 * 
-	 * @return CSV string
-	 * 
-	 */
 	
 	public void doPost(HttpServletRequest request,HttpServletResponse response)
 			throws IOException, ServletException{
@@ -140,18 +122,7 @@ public class PITracking  extends HttpServlet{
 				
 	}
 	
-	
-	/**
-	 * 
-	 * Process the request returns the Data requested in CSV Form
-	 * 
-	 * @param map
-	 *            HashMap contains request parameters.
-	 *            
-	 * 
-	 * @return CSV file
-	 * 
-	 */
+
 	
 	
 	private String process(HashMap map) throws Exception{
@@ -160,14 +131,19 @@ public class PITracking  extends HttpServlet{
 		int [] threadsIndex={0};
 		int [] maxActive={1};
 		String csv = "";
+		//Integer countComplete;
+		//Integer countInComplete;
 		ArrayList studiesResult = new ArrayList();
 		ArrayList result = new ArrayList();
 		ArrayList studies = new ArrayList();
 		int switchcase=0;
 		ArrayList times =  new ArrayList();
 		boolean useThreads;
+		
 		ArrayList runnigThreads = new ArrayList();
 		runnigThreads.clear();
+		//int max=500;//maxmimum splits
+		
 		String since = (String) map.get("since");
 		String until = (String) map.get("until");
 		String study = (String) map.get("study");
@@ -214,7 +190,10 @@ public class PITracking  extends HttpServlet{
 				since = (String) time.get("since");
 				time=(HashMap) times.get(times.size()-1);
 				until = (String) time.get("until"); 
+				
+				
 			}
+			
 			db = fixDB(db,test);
 			Studies manager =Studies.getInstance();
 			manager.setBaseURL(baseURL);
@@ -277,47 +256,104 @@ public class PITracking  extends HttpServlet{
 			}
 			
 			System.out.println("number of studies are: "+studiesResult.size());
+			/////////////////////////
 			if (!studyc.equals("true") && !taskc.equals("true") ){
+			 
 				csv = onlySessionSelected(map,csv,tracker,times,studiesResult,runnigThreads,maxActive,threadsIndex);
+				
 			}
 			if (studyc.equals("true") && !taskc.equals("true") ){
+				
+				ArrayList sessions = new ArrayList();
+				ArrayList sessions1 = new ArrayList(); 
 				HashMap trackerStudyGroups = new HashMap();
 				trackerStudyGroups.put("type", "getsession");
+				
 				if ( db.equals("both")){
-					for (int i=0;i<studiesResult.size();i++){//per study
-						String name = (String)studiesResult.get(i);
-							if (!name.equals("")){
-								map.put("connect", test+"std");
-								setTrackerGroups(trackerStudyGroups,map,name,"getsession",times);
-								
-							}
-					}
-					csv = processGroupByOne(trackerStudyGroups,csv,times,runnigThreads,studyc,taskc,datac,timec,maxActive,threadsIndex,map);
-					trackerStudyGroups.clear();
-					trackerStudyGroups.put("type", "getsession");
-					for (int i=0;i<studiesResult.size();i++){//per study
-						String name = (String)studiesResult.get(i);
-							if (!name.equals("")){
-								
-								map.put("connect", test+"research");
-								setTrackerGroups(trackerStudyGroups,map,name,"getsession",times);
-								
-							}
-						
-					}
-					csv = processGroupByOne(trackerStudyGroups,csv,times,runnigThreads,studyc,taskc,datac,timec,maxActive,threadsIndex,map);
-				}else{
-					for (int i=0;i<studiesResult.size();i++){//per study
-						String name = (String)studiesResult.get(i);
-							if (!name.equals("")){
-								map.put("connect", test+db);
-								setTrackerGroups(trackerStudyGroups,map,name,"getsession",times);
-							}
-					}
-					csv = processGroupByOne(trackerStudyGroups,csv,times,runnigThreads,studyc,taskc,datac,timec,maxActive,threadsIndex,map);
+			
+						for (int i=0;i<studiesResult.size();i++){//per study
+							String name = (String)studiesResult.get(i);
+								if (!name.equals("")){
+									if (useThreads==true){
+										map.put("connect", test+"std");
+										setTrackerGroups(trackerStudyGroups,map,name,"getsession",times);
+									}else{
+										//sessions = tracker.getSession((String)studiesResult.get(i),since,until,test+"std",task);
+										sessions = tracker.getSession((String)studiesResult.get(i),since,until,test+"std",task);
+										//ArrayList records = tracker.createRS(sessions,null,(String)studiesResult.get(i),"std",studyc,taskc,datac,timec,task,since,until);						
+										ArrayList records = createRS(sessions,null,(String)studiesResult.get(i),"std",studyc,taskc,datac,timec,task,since,until);
+										csv = turntoCSV(records,db,studyc,taskc,datac,timec,csv);
+									}
+								}
+			
+
+						}
 					
+						if (useThreads==true){
+
+							    csv = processGroupByOne(trackerStudyGroups,csv,times,runnigThreads,studyc,taskc,datac,timec,maxActive,threadsIndex,map);
+						}
+						
+						trackerStudyGroups.clear();
+						trackerStudyGroups.put("type", "getsession");
+						for (int i=0;i<studiesResult.size();i++){//per study
+							
+							String name = (String)studiesResult.get(i);
+								if (!name.equals("")){
+									if (useThreads==true){
+										map.put("connect", test+"research");
+										//setTrackerGroups(trackerStudyGroups,name,since,until,test+"research",times,task,timec,datac,"getsession");
+										setTrackerGroups(trackerStudyGroups,map,name,"getsession",times);
+									}else{
+										sessions1 = tracker.getSession((String)studiesResult.get(i),since,until,test+"research",task);
+										//ArrayList records = tracker.createRS(sessions1,null,(String)studiesResult.get(i),"research",studyc,taskc,datac,timec,task,since,until);						
+										ArrayList records = createRS(sessions1,null,(String)studiesResult.get(i),"research",studyc,taskc,datac,timec,task,since,until);
+										csv = turntoCSV(records,db,studyc,taskc,datac,timec,csv);
+									}
+								}
+							
+						}
+						
+						if (useThreads==true){
+							
+								csv = processGroupByOne(trackerStudyGroups,csv,times,runnigThreads,studyc,taskc,datac,timec,maxActive,threadsIndex,map);
+						}
+					
+				}else{
+						
+					for (int i=0;i<studiesResult.size();i++){//per study
+						String name = (String)studiesResult.get(i);
+							if (!name.equals("")){
+								if (useThreads==true){
+									map.put("connect", test+db);
+									setTrackerGroups(trackerStudyGroups,map,name,"getsession",times);
+									//setTrackerGroups(trackerStudyGroups,name,since,until,test+db,times,task,timec,datac,"getsession");
+								}else{
+
+									sessions = tracker.getSessionByCreationDate((String)studiesResult.get(i),since,until,test+db,task);
+									for (int tindex=0;tindex<times.size();tindex++){
+										HashMap time = (HashMap) times.get(tindex);
+										since = (String) time.get("since");
+										until = (String) time.get("until");
+										//ArrayList records = tracker.createRS(sessions,null,(String)studiesResult.get(i),db,studyc,taskc,datac,timec,task,since,until);						
+										ArrayList records = createRS(sessions,null,(String)studiesResult.get(i),db,studyc,taskc,datac,timec,task,since,until);
+										csv = turntoCSV(records,db,studyc,taskc,datac,timec,csv);
+									}
+										
+									
+								}
+					
+							}
+					}
+					if (useThreads==true){
+						csv = processGroupByOne(trackerStudyGroups,csv,times,runnigThreads,studyc,taskc,datac,timec,maxActive,threadsIndex,map);
+					}
+		
 				}
+	
 			}
+			
+			
 			if ( taskc.equals("true") ){
 				ArrayList sessions = new ArrayList(); 
 				ArrayList tasks = new ArrayList();
@@ -332,37 +368,82 @@ public class PITracking  extends HttpServlet{
 						String name = (String)studiesResult.get(i);
 						tasks.clear();
 						if (!name.equals("") ){
-							map.put("connect", test+"std");
-							setTrackerGroups(trackerStudyGroups,map,name,"gettasksII",times);
+							if (useThreads==true){
+								map.put("connect", test+"std");
+								setTrackerGroups(trackerStudyGroups,map,name,"gettasksII",times);
+								//setTrackerGroups(trackerStudyGroups,name,since,until,test+"std",times,task,timec,datac,"gettasksII");
+							}else{
+								sessions = tracker.getSession((String)studiesResult.get(i),since,until,test+"std",task);
+								tracker.getstartedTasks(test+"std",sessions,tasks);
+								tracker.calculateCompleted(sessions);
+								//ArrayList records = tracker.createRS(sessions,tasks,(String)studiesResult.get(i),"std",studyc,taskc,datac,timec,task,since,until);
+								ArrayList records = createRS(sessions,tasks,(String)studiesResult.get(i),"std",studyc,taskc,datac,timec,task,since,until);
+								csv = turntoCSV(records,test+"std",studyc,taskc,datac,timec,csv);
+							}
+								
 						}
 						
 					}
-					csv = processGroupByOne(trackerStudyGroups,csv,times,runnigThreads,studyc,taskc,datac,timec,maxActive,threadsIndex,map);
+					if (useThreads==true){
+							//csv = processGroupsByTaskByOneII(trackerStudyGroups,csv,maxActive,threadsIndex,times,studyc,taskc,datac,timec,runnigThreads);
+						      csv =	processGroupByOne(trackerStudyGroups,csv,times,runnigThreads,studyc,taskc,datac,timec,maxActive,threadsIndex,map);
+					}
+					
 					trackerStudyGroups.clear();
 					trackerStudyGroups.put("type", "getsession");
 					for (int i=0;i<studiesResult.size();i++){//per study
 						String name = (String)studiesResult.get(i);
 						tasks.clear();
 							if (!name.equals("") ){
-								map.put("connect", test+"research");
-								setTrackerGroups(trackerStudyGroups,map,name,"gettasksII",times);
+								if (useThreads==true){
+									map.put("connect", test+"research");
+									setTrackerGroups(trackerStudyGroups,map,name,"gettasksII",times);
+									///setTrackerGroups(trackerStudyGroups,name,since,until,test+"research",times,task,timec,datac,"gettasksII");
+									
+								}else{
+									sessions = tracker.getSession((String)studiesResult.get(i),since,until,test+"research",task);
+									tracker.getstartedTasks(test+"research",sessions,tasks);
+									tracker.calculateCompleted(sessions);
+									//ArrayList records = tracker.createRS(sessions,tasks,(String)studiesResult.get(i),"research",studyc,taskc,datac,timec,task,since,until);						
+									ArrayList records = createRS(sessions,tasks,(String)studiesResult.get(i),"research",studyc,taskc,datac,timec,task,since,until);
+									csv = turntoCSV(records,"research",studyc,taskc,datac,timec,csv);
+								}
 							}
+						
 					}
-					csv =	processGroupByOne(trackerStudyGroups,csv,times,runnigThreads,studyc,taskc,datac,timec,maxActive,threadsIndex,map);
-
+					if (useThreads==true){
+							//csv = processGroupsByTaskByOneII(trackerStudyGroups,csv,maxActive,threadsIndex,times,studyc,taskc,datac,timec,runnigThreads);
+						csv =	processGroupByOne(trackerStudyGroups,csv,times,runnigThreads,studyc,taskc,datac,timec,maxActive,threadsIndex,map);
+					}
 				}else{
+					
+					// TODO TASKS				
 					for (int i=0;i<studiesResult.size();i++){//per study
+						
 						String name = (String)studiesResult.get(i);
 						tasks.clear();
-						if (!name.equals("") ){
-								map.put("connect", test+db);
-								setTrackerGroups(trackerStudyGroups,map,name,"gettasksII",times);
-								
+							if (!name.equals("") ){
+								if (useThreads==true){
+									map.put("connect", test+db);
+									setTrackerGroups(trackerStudyGroups,map,name,"gettasksII",times);
+									//setTrackerGroups(trackerStudyGroups,name,since,until,test+db,times,task,timec,datac,"gettasksII");
+								}else{
+									//tasks.clear();
+									sessions = tracker.getSession((String)studiesResult.get(i),since,until,test+db,task);
+									tracker.getstartedTasks(test+db,sessions,tasks);
+									tracker.calculateCompleted(sessions);
+									//ArrayList records = tracker.createRS(sessions,tasks,(String)studiesResult.get(i),db,studyc,taskc,datac,timec,task,since,until);
+									ArrayList records = createRS(sessions,tasks,(String)studiesResult.get(i),db,studyc,taskc,datac,timec,task,since,until);
+									csv = turntoCSV(records,db,studyc,taskc,datac,timec,csv);
+									
+								}
 						}
 						
 					}
-					csv =	processGroupByOne(trackerStudyGroups,csv,times,runnigThreads,studyc,taskc,datac,timec,maxActive,threadsIndex,map);
-
+					if (useThreads==true){
+							  //csv = processGroupsByTaskByOneII(trackerStudyGroups,csv,maxActive,threadsIndex,times,studyc,taskc,datac,timec,runnigThreads);
+						csv =	processGroupByOne(trackerStudyGroups,csv,times,runnigThreads,studyc,taskc,datac,timec,maxActive,threadsIndex,map);
+					}
 				}
 			}
 		} catch (Exception e) {
@@ -376,26 +457,11 @@ public class PITracking  extends HttpServlet{
 		
 		
 	}
-	/**
-	 * 
-	 * Process the request returns the Data requested in CSV Form
-	 * 
-	 * @param map,csv,tracker,times,studiesResult,runnigThreads,maxActive,threadsIndex.
-	 *            
-	 *            HashMap contains request parameters.
-	 *            CSV string that will be populated
-	 *            Tracker Object that will run the database queries.
-	 *            studiesResult list of studies to query.
-	 *            runnigThreads array of running threads
-	 *            maxActive maximum active threads
-	 *            threadsIndex running index that keeps track of threads
-	 *            
-	 *            
-	 * 
-	 * @return CSV file
-	 * 
-	 */
-	
+	// TODO complete
+	private String studySessionSelected(HashMap map,String csv,PITrackingDAO tracker,ArrayList times,ArrayList studiesResult,ArrayList runnigThreads,int[] maxActive,int[] threadsIndex ) throws Exception{
+		
+		return null;
+	}
 	private String onlySessionSelected(HashMap map,String csv,PITrackingDAO tracker,ArrayList times,ArrayList studiesResult,ArrayList runnigThreads,int[] maxActive,int[] threadsIndex ) throws Exception{
 		
 		
@@ -436,24 +502,35 @@ public class PITracking  extends HttpServlet{
 					trackerStudyGroups.clear();
 					trackerStudyGroups.put("type", "totalsessions");
 					for (int i=0;i<studiesResult.size();i++){//per study
+						
 						String name = (String)studiesResult.get(i);
 							if (!name.equals("")){
 								map.put("connect", test+"research");
 								setTrackerGroups(trackerStudyGroups,map,name,"getTotalSessions",times);
+								//setTrackerGroups(trackerStudyGroups,name,since,until,test+"research",times,task,timec,datac,"getTotalSessions");
 								
 							}
+						
 					}
 					csv = processGroupByOne(trackerStudyGroups,csv,times,runnigThreads,studyc,taskc,datac,timec,maxActive,threadsIndex,map);
+					
+				
 			}else{
+					
 				for (int i=0;i<studiesResult.size();i++){//per study
 					String name = (String)studiesResult.get(i);
 						if (!name.equals("")){
 							map.put("connect", test+db);
 							setTrackerGroups(trackerStudyGroups,map,name,"getTotalSessions",times);
+							//setTrackerGroups(trackerStudyGroups,name,since,until,test+db,times,task,timec,datac,"getTotalSessions");
+											
 						}
 				}
 				csv = processGroupByOne(trackerStudyGroups,csv,times,runnigThreads,studyc,taskc,datac,timec,maxActive,threadsIndex,map);
+				
+	
 			}
+			
 		}else{
 			if (db.equals("both")){
 				ArrayList records = tracker.getSessionPerResultSet("", since, until, test+"std", task, timec, datac,times);
@@ -463,28 +540,19 @@ public class PITracking  extends HttpServlet{
 			}else{
 				ArrayList records = tracker.getSessionPerResultSet(study, since, until, test+db, task, timec, datac,times);
 				csv = turntoCSV(records,db,studyc,taskc,datac,timec,csv);
+				
+				//}else{
+					
+					
+					
+			//	}
+						
 			}
 			
 		}
 		
 		return csv;
 	}
-	
-	/**
-	 * 
-	 * Clean arrays from duplicates and merge arrays 
-	 * 
-	 * @param study1,study2
-	 *            
-	 *            study1 first array
-	 *            study2 second array
-	 *            
-	 *            
-	 * 
-	 * @return cleaned merged array.
-	 * 
-	 */
-	
 	private ArrayList filterDuplicates (ArrayList study1,ArrayList study2){
 		
 		ArrayList combine=new ArrayList();
@@ -500,22 +568,6 @@ public class PITracking  extends HttpServlet{
 		return study1;
 		
 	}
-	
-	/**
-	 * 
-	 * Add study to array if does not exist 
-	 * 
-	 * @param studies,studyc
-	 *            
-	 *            studies array of studies
-	 *            studyc study to add
-	 *            
-	 *            
-	 * 
-	 * @return studies array
-	 * 
-	 */
-	
 	private ArrayList filterStudies(ArrayList studies,String studyc){
 		ArrayList result = new ArrayList();
 		
@@ -534,21 +586,6 @@ public class PITracking  extends HttpServlet{
 		}
 		
 	}
-	
-	/**
-	 * 
-	 * Fix the database params according to JNDI
-	 * 
-	 * @param db,test
-	 *            
-	 *            db chosen data base to use
-	 *            test test data base or real one.
-	 *            
-	 *            
-	 * 
-	 * @return fixed database param
-	 * 
-	 */
 	private String fixDB(String db,String test){
 		
 		
@@ -561,26 +598,7 @@ public class PITracking  extends HttpServlet{
 		return null;
 	}
 	
-	
-	/**
-	 * 
-	 * Return an array of times based on range and a time selector: d/w/m/y 
-	 * 
-	 * @param since,until,day,week,month,year,timec
-	 *            
-	 *            since time range
-	 *            until time range
-	 *            day time selector string representation of true/false.
-	 *            week time selector string representation of true/false.
-	 *            month time selector string representation of true/false.
-	 *            year time selector string representation of true/false.
-	 *            timec time selector string representation of true/false.
-	 *            
-	 *            
-	 * 
-	 * @return time array
-	 * 
-	 */
+		
 
 	private ArrayList getTimes(String since,String until,String day,String week,String month,String year,String timec) throws ParseException{
 		
@@ -836,28 +854,11 @@ public class PITracking  extends HttpServlet{
 	}
 	
 
-	/**
-	 * 
-	 * Return an array of times based on range and a time selector: d/w/m/y 
-	 * 
-	 * @param since,until,day,week,month,year,timec
-	 *            
-	 *            since time range
-	 *            until time range
-	 *            day time selector string representation of true/false.
-	 *            week time selector string representation of true/false.
-	 *            month time selector string representation of true/false.
-	 *            year time selector string representation of true/false.
-	 *            timec time selector string representation of true/false.
-	 *            
-	 *            
-	 * 
-	 * @return time array
-	 * 
-	 */
-	private String createCSVForOneGroup(HashMap group,String csv,String studyc,String taskc,String datac,String timec) throws Exception{
+	
+	private String createCVSForOneGroup(HashMap group,String csv,String studyc,String taskc,String datac,String timec) throws Exception{
 		
-				
+		//System.out.println("starting createCVSForOneGroup");
+		
 		ArrayList trackers = (ArrayList) group.get("trackers");
 	    ArrayList tasks;
 	    try{
@@ -891,26 +892,8 @@ public class PITracking  extends HttpServlet{
 	    
 		return csv;
 	}
-	/**
-	 * 
-	 * Return a CSV from resulted threads 
-	 * 
-	 * @param  groupThreadas,cvs,studyc,taskc,datac,timec
-	 *            
-	 *            groupThreadas the group of threads that were run.
-	 *            cvs string to be added to.
-	 *            studyc selector, string representation of true/false.
-	 *            taskc selector, string representation of true/false.
-	 *            datac selector, string representation of true/false.
-	 *            timec selector, string representation of true/false.
-	 *           
-	 *            
-	 *            
-	 * 
-	 * @return CSV string
-	 * 
-	 */
-	private String createCSV(HashMap groupThreadas,String cvs,String studyc,String taskc,String datac,String timec) throws Exception{
+	
+	private String createCVS(HashMap groupThreadas,String cvs,String studyc,String taskc,String datac,String timec) throws Exception{
 		
 		String csv1=cvs;
 		Iterator entries = groupThreadas.entrySet().iterator();
@@ -952,25 +935,7 @@ public class PITracking  extends HttpServlet{
 		
 	}
 
-	/**
-	 * 
-	 * Create a CSV from ArrayList
-	 * 
-	 * @param  rs,db,studyc,taskc,datac,timec,csv
-	 *            
-	 *            groupThreadas the group of threads that were run.
-	 *            cvs string to be added to.
-	 *            studyc selector, string representation of true/false.
-	 *            taskc selector, string representation of true/false.
-	 *            datac selector, string representation of true/false.
-	 *            timec selector, string representation of true/false.
-	 *           
-	 *            
-	 *            
-	 * 
-	 * @return CSV string
-	 * 
-	 */
+	
 	public String turntoCSV(ArrayList rs,String db,String studyc,String taskc,String datac,String timec,String csv) throws Exception{
 		
 		try{
@@ -1010,6 +975,8 @@ public class PITracking  extends HttpServlet{
 				
 				
 			}
+			
+			
 			Iterator itr = rs.iterator();
 			while(itr.hasNext()){//iterate all records
 				ArrayList row = new ArrayList();
@@ -1037,19 +1004,6 @@ public class PITracking  extends HttpServlet{
 		
 	}
 
-	/**
-	 * 
-	 * Clone an Arraylist
-	 * 
-	 * @param  array
-	 *            
-	 *            array aaray to clone 
-	 *            
-	 * 
-	 * @return cloned array
-	 * 
-	 */
-	
 	private ArrayList clone (ArrayList array){
 		ArrayList result = new ArrayList();
 		for (int i=0;i<array.size();i++){
@@ -1060,23 +1014,6 @@ public class PITracking  extends HttpServlet{
 		
 		
 	}
-	
-	/**
-	 * 
-	 * Prepare the tracker groups 
-	 * 
-	 * @param  trackerGroups,map,name,functionType,times
-	 *            
-	 *            trackerGroups the groups to prepare.
-	 *            map HashMap of request parameters
-	 *            name name of study
-	 *            functionType the type of function only sesstions, or also tasks
-	 *            times ArrayList of times 
-	 *            
-	 * 
-	 * @return void
-	 * 
-	 */
 	private void setTrackerGroups(HashMap trackerGroups,HashMap map,String name,String functionType,ArrayList times) throws Exception{
 		
 		
@@ -1088,13 +1025,20 @@ public class PITracking  extends HttpServlet{
 			String db = (String) map.get("connect");
 			String endTask = (String) map.get("endTask");
 			String filter = (String) map.get("filter");
+			
+		
+		
 			HashMap studyGroup = new HashMap();
 			studyGroup.put("studyname", new String(name));
 			ArrayList trackers = new ArrayList();
 			ArrayList threads = new ArrayList();
+			//ArrayList tasks = new ArrayList();
 			studyGroup.put("trackers", trackers);
+			//studyGroup.put("threads", threads);
+			//studyGroup.put("tasks", tasks);
 			HashMap args=new HashMap();
 			args.put("id",0);
+			//args.put("method", "getsession");
 			args.put("method",new String(functionType));
 			args.put("studyname", new String(name));
 			args.put("since", new String(since));
@@ -1102,32 +1046,25 @@ public class PITracking  extends HttpServlet{
 			args.put("db", new String(db));
 			args.put("task", new String(task));
 			args.put("filter", new String(filter));
+			//args.put("tasks",tasks);
 			args.put("timec",new String(timec));
 			args.put("datac",new String(datac));
 			args.put("times",clone(times));
 			args.put("endTask",new String(endTask));
 			PITrackingDAO tracker1= new PITrackingDAO(args);
+			//ArrayList sessions = new ArrayList();
 			HashMap res = tracker1.getResults();
+			//res.put("sessions", sessions);
 			trackers.add(tracker1);
+			//Thread t = new Thread(tracker1);
+			//threads.add(t);
+			
+			
 			trackerGroups.put(name, studyGroup);
+		
+
+		
 	}
-	
-	/**
-	 * 
-	 * Add a new thread to running list of threads 
-	 * 
-	 * @param  t,threadsIndexA,maxActiveA,runnigThreads
-	 *            
-	 *            t Thread to add.
-	 *            threadsIndexA Index of number of active threads
-	 *            maxActiveA Maximum active threads
-	 *            runnigThreads Array of running threads. 
-	 *             
-	 * 
-	 * @return void
-	 * 
-	 */
-	
 
 	private void addThreadstoList(Thread t,int[] threadsIndexA,int[] maxActiveA,ArrayList runnigThreads) throws Exception{
 		
@@ -1160,45 +1097,53 @@ public class PITracking  extends HttpServlet{
 		
 	}
 
-	/**
-	 * 
-	 * Start running the threads 
-	 * 
-	 * @param  groupThreadas,maxindex,index,globalThreads
-	 *            
-	 *            groupThreadas Group of threads to run..
-	 *            maxindex max of threads to run
-	 *            index index of threads
-	 *            globalThreads Array of running threads. 
-	 *             
-	 * 
-	 * @return void
-	 * 
-	 */
 	
-	private void startGroupThreads(HashMap groupThreadas,int[] maxindex,int[] index,ArrayList globalThreads) throws Exception{
-			
-			
+private void startGroupThreads(HashMap groupThreadas,int[] maxindex,int[] index,ArrayList globalThreads) throws Exception{
+		
+		
 		Iterator entries = groupThreadas.entrySet().iterator();
 		while (entries.hasNext()) {
 			Map.Entry entry = (Map.Entry) entries.next();
+		    //String key = (String)entry.getKey();
 		    HashMap value = (HashMap)entry.getValue();
-		    startThreads(value,maxindex,index,globalThreads);
+		    //(HashMap group,int maxindex,int index,ArrayList globalThreads
+		   	startThreads(value,maxindex,index,globalThreads);
 		    
 		}
 	}
-
-	/**
-	 * 
-	 * live progress bar (not used)
-	 * 
-	 * @param  
-	 *            
-	 * 
-	 * @return void
-	 * 
-	 */
+private String processGroupsByTaskByOneII(HashMap groupThreadas,String csv,int[] max,int tindex[],ArrayList times,String studyc,String taskc,String datac,String timec,ArrayList runnigThreads) throws Exception{
 	
+	int index=0;
+	Iterator entries = groupThreadas.entrySet().iterator();
+	HashMap newGroups = new HashMap();
+	while (entries.hasNext()) {
+		
+		Map.Entry entry = (Map.Entry) entries.next();
+	    String key = (String)entry.getKey();
+	    HashMap value = (HashMap)entry.getValue();
+	    ArrayList trackers = (ArrayList) value.get("trackers");
+	    PITrackingDAO track = (PITrackingDAO) trackers.get(0);
+	    HashMap args = track.getArguments();
+	    args.put("method", "gettasksII");
+	    startThreads(value,max,tindex,runnigThreads);
+	    waitUntilFinished(runnigThreads);
+	    //HashMap group,String csv,ArrayList times,String studyc,String taskc,String datac,String timec)
+	    csv = createCVSForOneGroup(value,csv,studyc,taskc,datac,timec);
+	    ((ArrayList)value.get("trackers")).clear();
+	    ((ArrayList)value.get("threads")).clear();
+	    runnigThreads.clear();
+//	    groupThreadas.remove(key);
+	    groupThreadas.put(key,null);
+		
+	}
+	return csv;
+	
+	
+	
+	
+
+}
+// TODO progressbar 
 private void progressBar(HashMap studyGroup,HashMap map) throws Exception{
 	
 	HttpServletResponse resp = (HttpServletResponse) map.get("resp");
@@ -1230,250 +1175,230 @@ private void progressBar(HashMap studyGroup,HashMap map) throws Exception{
 	//writer.flush();
 	//resp.flushBuffer();
 }
-/**
- * 
- * Start the threads and return the result in the form of CSV
- * 
- * @param db,test
- *            
- *            db chosen data base to use
- *            test test data base or real one.
- *            
- *            
- * 
- * @return fixed database param
- * 
- */
-	private String processGroupByOne(HashMap studygroup,String csv,ArrayList times,ArrayList runnigThreads,String studyc,String taskc,String datac,String timec,int[] Threadmax,int[] threadindex,HashMap map) throws Exception{
-		
-		int index=0;
-		Iterator entries = studygroup.entrySet().iterator();
-		String key;
-		HashMap value = null;
-		try{
-			while (entries.hasNext()) {
-				Map.Entry entry = (Map.Entry) entries.next();
-			    key = (String)entry.getKey();
-			    if (!key.equals("type")){
-			    	value = (HashMap)entry.getValue();
-			    	startThreads(value,Threadmax,threadindex,runnigThreads);
-			    }
-			  			
-			}
-			waitUntilFinished(runnigThreads);
-		    runnigThreads.clear();
-		   	if (( (String)studygroup.get("type")).equals("totalsessions") ){
-				HashMap newvalue = sumUp(studygroup,datac,timec);
-				csv = createCSVForOneGroup(newvalue,csv,studyc,taskc,datac,timec);
-			}else{
-				csv = createCSV(studygroup,csv,studyc,taskc,datac,timec);
-			
-			}
-				
-		}catch(Exception e){
-			System.out.println("Exception in processGroupByOne"+e.getMessage());
-			throw e;
+private String processGroupByOne(HashMap studygroup,String csv,ArrayList times,ArrayList runnigThreads,String studyc,String taskc,String datac,String timec,int[] Threadmax,int[] threadindex,HashMap map) throws Exception{
+	
+	int index=0;
+	Iterator entries = studygroup.entrySet().iterator();
+	String key;
+	HashMap value = null;
+	try{
+		while (entries.hasNext()) {
+			Map.Entry entry = (Map.Entry) entries.next();
+		    key = (String)entry.getKey();
+		    if (!key.equals("type")){
+		    	value = (HashMap)entry.getValue();
+		    	startThreads(value,Threadmax,threadindex,runnigThreads);
+		    }
+		  			
 		}
-		return csv;
-	
+		waitUntilFinished(runnigThreads);
+	    runnigThreads.clear();
+	   	if (( (String)studygroup.get("type")).equals("totalsessions") ){
+			HashMap newvalue = sumUp(studygroup,datac,timec);
+			csv = createCVSForOneGroup(newvalue,csv,studyc,taskc,datac,timec);
+		}else{
+			csv = createCVS(studygroup,csv,studyc,taskc,datac,timec);
+		
+		}
+			
+	}catch(Exception e){
+		System.out.println("Exception in processGroupByOne"+e.getMessage());
+		throw e;
 	}
+	return csv;
 
-	/**
-	 * 
-	 * Sum up the sessions records in the HashMap. 
-	 * 
-	 * @param studygroup,datac,timec
-	 *            
-	 *            studygroup Group to sum up records.
-	 *            datac selector, string representation of true/false.
-	 *            timec selector, string representation of true/false.
-	 *            
-	 *            
-	 * 
-	 * @return The HashMap after summing up the records
-	 * 
-	 */
-	
-	private HashMap sumUp(HashMap studygroup,String datac,String timec) throws Exception{
-		HashMap newStudy = new HashMap();
-		PITrackingDAO newTrack = new PITrackingDAO();
-		ArrayList newrecordset = new ArrayList();
-		ArrayList  newTrackers = new ArrayList();
-		String newDB = new String();
-		float started=0;
-		float completed=0;
-		PITrackingDAO track = new PITrackingDAO();
-		Iterator entries = studygroup.entrySet().iterator();
-		String key;
-		HashMap value = new HashMap();
-		try{
-			while (entries.hasNext()) {
-				Map.Entry entry = (Map.Entry) entries.next();
-			    key = (String)entry.getKey();
-			    if (!key.equals("type")){
-			    	value = (HashMap)entry.getValue();
-			    	ArrayList trackers = (ArrayList) value.get("trackers");
-				    track=(PITrackingDAO)trackers.get(0);
-				    HashMap res = (HashMap) track.getResults();
-					ArrayList rec = (ArrayList) res.get("records");
-					if (newrecordset.size()==0){
-						for (int z=0;z<rec.size();z++){
-							ArrayList onerec = (ArrayList) rec.get(z);
-							newrecordset.add(onerec);
-						}
-						
-					}else{
-						for (int i=0;i<rec.size();i++){
-							ArrayList onenewrec = (ArrayList) rec.get(i);
-							ArrayList oneoldrec = (ArrayList) newrecordset.get(i);
-							if (timec.equals("true")){
-								if (datac.equals("true")){
-									int recStarted = Integer.parseInt((String) onenewrec.get(2));
-									int recCompleted  = Integer.parseInt((String) onenewrec.get(3));
-									int oldrecStarted = Integer.parseInt((String)oneoldrec.get(2)) +recStarted; 
-									int oldreccompletd = Integer.parseInt((String)oneoldrec.get(3)) +recCompleted; 
-									oneoldrec.set(2,String.valueOf(oldrecStarted) );
-									oneoldrec.set(3,String.valueOf(oldreccompletd) );
-									float sum;
-									if (oldrecStarted!=0){
-										sum = ((float)oldreccompletd/(float)oldrecStarted)*100;
-									}else{
-										sum=0;
-									}
-									
-									oneoldrec.set(4,String.valueOf((int)sum) );
-									
-									
+}
+
+private HashMap sumUp(HashMap studygroup,String datac,String timec) throws Exception{
+	HashMap newStudy = new HashMap();
+	PITrackingDAO newTrack = new PITrackingDAO();
+	ArrayList newrecordset = new ArrayList();
+	ArrayList  newTrackers = new ArrayList();
+	String newDB = new String();
+	float started=0;
+	float completed=0;
+	PITrackingDAO track = new PITrackingDAO();
+	Iterator entries = studygroup.entrySet().iterator();
+	String key;
+	HashMap value = new HashMap();
+	try{
+		while (entries.hasNext()) {
+			Map.Entry entry = (Map.Entry) entries.next();
+		    key = (String)entry.getKey();
+		    if (!key.equals("type")){
+		    	value = (HashMap)entry.getValue();
+		    	ArrayList trackers = (ArrayList) value.get("trackers");
+			    track=(PITrackingDAO)trackers.get(0);
+			    HashMap res = (HashMap) track.getResults();
+				ArrayList rec = (ArrayList) res.get("records");
+				if (newrecordset.size()==0){
+					for (int z=0;z<rec.size();z++){
+						ArrayList onerec = (ArrayList) rec.get(z);
+						newrecordset.add(onerec);
+					}
+					
+				}else{
+					for (int i=0;i<rec.size();i++){
+						ArrayList onenewrec = (ArrayList) rec.get(i);
+						ArrayList oneoldrec = (ArrayList) newrecordset.get(i);
+						if (timec.equals("true")){
+							if (datac.equals("true")){
+								int recStarted = Integer.parseInt((String) onenewrec.get(2));
+								int recCompleted  = Integer.parseInt((String) onenewrec.get(3));
+								int oldrecStarted = Integer.parseInt((String)oneoldrec.get(2)) +recStarted; 
+								int oldreccompletd = Integer.parseInt((String)oneoldrec.get(3)) +recCompleted; 
+								oneoldrec.set(2,String.valueOf(oldrecStarted) );
+								oneoldrec.set(3,String.valueOf(oldreccompletd) );
+								float sum;
+								if (oldrecStarted!=0){
+									sum = ((float)oldreccompletd/(float)oldrecStarted)*100;
 								}else{
-									int recStarted = Integer.parseInt((String) onenewrec.get(1));
-									int recCompleted  = Integer.parseInt((String) onenewrec.get(2));
-									int oldrecStarted = Integer.parseInt((String)oneoldrec.get(1)) +recStarted;
-									int oldrecCompleted  = Integer.parseInt((String)oneoldrec.get(2)) +recCompleted;
-									oneoldrec.set(1, String.valueOf(oldrecStarted)) ;
-									oneoldrec.set(2,String.valueOf(oldrecCompleted)) ;
-									float sum;
-									if (oldrecStarted!=0){
-										sum = ((float)oldrecCompleted/(float)oldrecStarted)*100;
-									}else{
-										sum=0;
-									}
-									oneoldrec.set(3,String.valueOf((int)sum) );
-									
+									sum=0;
 								}
 								
+								oneoldrec.set(4,String.valueOf((int)sum) );
+								
+								
 							}else{
-								if (datac.equals("true")){
-									
-									int recStarted = Integer.parseInt((String) onenewrec.get(1));
-									int recCompleted  = Integer.parseInt((String) onenewrec.get(2));
-									int oldrecStarted = Integer.parseInt((String)oneoldrec.get(1)) +recStarted;
-									int oldrecCompleted  = Integer.parseInt((String)oneoldrec.get(2)) +recCompleted;
-									oneoldrec.set(1, String.valueOf(oldrecStarted)) ;
-									oneoldrec.set(2,String.valueOf(oldrecCompleted)) ;
-									float sum;
-									if (oldrecStarted!=0){
-										sum = ((float)oldrecCompleted/(float)oldrecStarted)*100;
-									}else{
-										sum=0;
-									}
-									oneoldrec.set(3,String.valueOf((int)sum) );
-	
-									
+								int recStarted = Integer.parseInt((String) onenewrec.get(1));
+								int recCompleted  = Integer.parseInt((String) onenewrec.get(2));
+								int oldrecStarted = Integer.parseInt((String)oneoldrec.get(1)) +recStarted;
+								int oldrecCompleted  = Integer.parseInt((String)oneoldrec.get(2)) +recCompleted;
+								oneoldrec.set(1, String.valueOf(oldrecStarted)) ;
+								oneoldrec.set(2,String.valueOf(oldrecCompleted)) ;
+								float sum;
+								if (oldrecStarted!=0){
+									sum = ((float)oldrecCompleted/(float)oldrecStarted)*100;
 								}else{
-									int recStarted = Integer.parseInt((String) onenewrec.get(0));
-									int recCompleted  = Integer.parseInt((String) onenewrec.get(1));
-									int oldrecStarted = Integer.parseInt((String)oneoldrec.get(0)) +recStarted;
-									int oldrecCompleted  = Integer.parseInt((String)oneoldrec.get(1)) +recCompleted;
-									oneoldrec.set(0,String.valueOf(oldrecStarted));
-									oneoldrec.set(1,String.valueOf(oldrecCompleted));
-									float sum;
-									if (oldrecStarted!=0){
-										sum = ((float)oldrecCompleted/(float)oldrecStarted)*100;
-									}else{
-										sum=0;
-									}
-									oneoldrec.set(2,String.valueOf((int)sum) );
-	
-									
+									sum=0;
 								}
+								oneoldrec.set(3,String.valueOf((int)sum) );
+								
+							}
+							
+						}else{
+							if (datac.equals("true")){
+								
+								int recStarted = Integer.parseInt((String) onenewrec.get(1));
+								int recCompleted  = Integer.parseInt((String) onenewrec.get(2));
+								int oldrecStarted = Integer.parseInt((String)oneoldrec.get(1)) +recStarted;
+								int oldrecCompleted  = Integer.parseInt((String)oneoldrec.get(2)) +recCompleted;
+								oneoldrec.set(1, String.valueOf(oldrecStarted)) ;
+								oneoldrec.set(2,String.valueOf(oldrecCompleted)) ;
+								float sum;
+								if (oldrecStarted!=0){
+									sum = ((float)oldrecCompleted/(float)oldrecStarted)*100;
+								}else{
+									sum=0;
+								}
+								oneoldrec.set(3,String.valueOf((int)sum) );
+
+								
+							}else{
+								int recStarted = Integer.parseInt((String) onenewrec.get(0));
+								int recCompleted  = Integer.parseInt((String) onenewrec.get(1));
+								int oldrecStarted = Integer.parseInt((String)oneoldrec.get(0)) +recStarted;
+								int oldrecCompleted  = Integer.parseInt((String)oneoldrec.get(1)) +recCompleted;
+								oneoldrec.set(0,String.valueOf(oldrecStarted));
+								oneoldrec.set(1,String.valueOf(oldrecCompleted));
+								float sum;
+								if (oldrecStarted!=0){
+									sum = ((float)oldrecCompleted/(float)oldrecStarted)*100;
+								}else{
+									sum=0;
+								}
+								oneoldrec.set(2,String.valueOf((int)sum) );
+
 								
 							}
 							
 						}
 						
 					}
-			    }
-			}
-			HashMap results =  newTrack.getResults();
-			HashMap newargs = newTrack.getArguments();
-			newargs.put("db", newDB);
-			results.put("records", newrecordset);
-			newTrackers.add(newTrack);
-			newStudy.put("trackers", newTrackers);
-			
-			
-			
-		}catch(Exception e ){
-			System.out.println(e.getMessage());
-		}
-		return newStudy;
-		
-	}
-
-	/**
-	 * 
-	 * Start the threads of one group
-	 * 
-	 * @param group,maxindex,index,globalThreads
-	 *            
-	 *            group Group of trackers/threads to run
-	 *            maxindex Max index of threads 
-	 *            index Index of threads 
-	 *            globalThreads ArrayList of global threads
-	 *            
-	 *            
-	 * 
-	 * @return void
-	 * 
-	 */
-	
-	
-	private void startThreads(HashMap group,int[] maxindex,int[] index,ArrayList globalThreads) throws Exception{
-	
-		
-		ArrayList trackers =(ArrayList) group.get("trackers");
-		try{
-			for (int i=0;i<trackers.size();i++){ 
-				PITrackingDAO track = (PITrackingDAO) trackers.get(i);
-				HashMap args = track.getArguments();
-				String method = (String)args.get("method");
-				if (method.equals("getsession") || method.equals("gettasks") || method.equals("gettasksII") || method.equals("getTotalSessions")){
-					Thread t = new Thread(track);
-					addThreadstoList(t,index,maxindex,globalThreads);
+					
 				}
+		    }
+		}
+//				for (int j=0;j<newrecordset.size();j++){
+//					
+//					ArrayList record  = (ArrayList) newrecordset.get(j);
+//					int recStarted;
+//					int recCompleted;
+//					int recCR;
+//					recStarted = Integer.parseInt((String) record.get(1));
+//						recCompleted  = Integer.parseInt((String) record.get(2));
+//						recCR  = Integer.parseInt((String) record.get(3));
+//					}
+//					
+//				}
+//				
+//				
+//				
+//				
+//				started +=recStarted;
+//				completed +=recCompleted;
+//		    }
+//			
+//		}
+//		HashMap args = track.getArguments();
+//		newDB = (String) args.get("db");
+//		
+//		newrec.add((String)String.valueOf((int)started));
+//		newrec.add((String)String.valueOf((int)completed));
+//		float sum = (completed/started)*100;
+//		newrec.add((String)String.valueOf((int)sum));
+//		newrecordset.add(newrec);
+		HashMap results =  newTrack.getResults();
+		HashMap newargs = newTrack.getArguments();
+		newargs.put("db", newDB);
+		results.put("records", newrecordset);
+		newTrackers.add(newTrack);
+		newStudy.put("trackers", newTrackers);
+		
+		
+		
+	}catch(Exception e ){
+		System.out.println(e.getMessage());
+	}
+	return newStudy;
+	
+}
+
+private void startThreads(HashMap group,int[] maxindex,int[] index,ArrayList globalThreads) throws Exception{
+
+	
+	ArrayList trackers =(ArrayList) group.get("trackers");
+	try{
+		for (int i=0;i<trackers.size();i++){ 
+			PITrackingDAO track = (PITrackingDAO) trackers.get(i);
+			HashMap args = track.getArguments();
+			String method = (String)args.get("method");
+			if (method.equals("getTotalSessions")){
+				Thread t = new Thread(track);
+				addThreadstoList(t,index,maxindex,globalThreads);
 				
 			}
-		}catch(Exception e){
-			System.out.println("Exception in startThreads ");
+			if (method.equals("getsession")){
+				Thread t = new Thread(track);
+				//int threadsIndex,int maxActive,ArrayList runnigThreads
+				addThreadstoList(t,index,maxindex,globalThreads);
+			}
+			if (method.equals("gettasks")){
+				Thread t = new Thread(track);
+				addThreadstoList(t,index,maxindex,globalThreads);
+			}
+			if (method.equals("gettasksII")){
+				Thread t = new Thread(track);
+				addThreadstoList(t,index,maxindex,globalThreads);
+			}
 		}
-		
+	}catch(Exception e){
+		System.out.println("Exception in startThreads ");
 	}
+	
+}
 
 
-	
-	/**
-	 * 
-	 * Wait until all threads finish executing.
-	 * 
-	 * @param threads
-	 *            
-	 *            threads ArrayList of threads
-	 *            
-	 * 
-	 * @return void 
-	 * 
-	 */
-	
 	private void waitUntilFinished(ArrayList threads) throws Exception {
 		
 		try{
@@ -1488,8 +1413,260 @@ private void progressBar(HashMap studyGroup,HashMap map) throws Exception{
 	
 		
 	}
+	private void calulateCompleteGroupsForOneGroup(HashMap value) throws Exception{
+		
+		ArrayList trackers = (ArrayList) value.get("trackers");
+	    for (int i=0;i<trackers.size();i++){
+	    	PITrackingDAO track = (PITrackingDAO) trackers.get(i);
+	    	HashMap res = track.getResults();
+	    	ArrayList sessions =(ArrayList) res.get("sessions");
+	    	track.calculateCompleted(sessions);
+	    }
+		
+	}
+	private void calulateCompleteGroups(HashMap groups) throws Exception{
+		
+		Iterator entries = groups.entrySet().iterator();
+		while (entries.hasNext()) {
+			Map.Entry entry = (Map.Entry) entries.next();
+		    //String key = (String)entry.getKey();
+		    HashMap value = (HashMap)entry.getValue();
+		    ArrayList trackers = (ArrayList) value.get("trackers");
+		    for (int i=0;i<trackers.size();i++){
+		    	PITrackingDAO track = (PITrackingDAO) trackers.get(i);
+		    	HashMap res = track.getResults();
+		    	ArrayList sessions =(ArrayList) res.get("sessions");
+		    	track.calculateCompleted(sessions);
+		    }
+		}
+	}
+	
 
+	
+	private ArrayList createRS(ArrayList sessions,ArrayList tasks,String name,String db,String studyc,String taskc,String datac,String timec,String taskName,String since,String until) throws Exception{
+		
+		
+		Integer NumberOfCompletedSessions=0;
+		Integer NumberOfInCompletedSessions=0;
+		float sCR=0;
+		float cr=0;
+		String studyName="";
+		ArrayList recordSet = new ArrayList();
+		
+		if (sessions==null) {
+			
+			return recordSet;
+		}
+		try{
+			
+			
+			for(int i=0;i<sessions.size();i++){
+				
+				sessionBean session = (sessionBean) sessions.get(i);
+				String status =session.getStatus(); 
+				if ( status == null || !(status.equals( "C" )) ){
+					
+					NumberOfInCompletedSessions++;
+					
+				}else{
+					NumberOfCompletedSessions++;
+				}
+			}
+			if (NumberOfCompletedSessions!=0){
+				 sCR = NumberOfCompletedSessions+NumberOfInCompletedSessions;
+				 cr  = (NumberOfCompletedSessions/sCR )*100;
+			}else{
+				cr=0;
+				
+			}
+			//////////////creating study record//////////////
+			
+			if ((NumberOfInCompletedSessions+NumberOfCompletedSessions)==0 && !timec.equals("true")) {
+				return recordSet;
+			}
+			
+			sessionBean session=null;
+			ArrayList record = new ArrayList();
+			if (sessions.size()==0){
+				studyName= name;
+				
+			}else{
+				session =(sessionBean)sessions.get(0);
+				studyName = session.getName();
+				
+			}
+			/////for only sessions////////////////////////
+			if (!(studyc.equals("true")) && !(taskc.equals("true"))){
+				if (timec.equals("true")){
+					if (since.equals(until)){
+						record.add(since);
+					}else{
+						record.add(since+" - "+until);
+					}
+					
+				}
+				if (datac.equals("true")){
+					if (db.equals("std")){
+						record.add("Demo");//add database
+						
+					}
+					if (db.equals("research")){
+						record.add("research");
+					}
+					
+				}
+				record.add(String.valueOf(NumberOfInCompletedSessions+NumberOfCompletedSessions));
+				record.add(String.valueOf(NumberOfCompletedSessions));
+				record.add(String.valueOf(Math.round(cr) ));
+				recordSet.add(record);
+				return recordSet;
+				
+			}
+			//////////for study row///////////////////
+			if (studyc.equals("true") && !taskc.equals("true")){
 
+				record.add(studyName);
+				if (timec.equals("true")){
+					if (since.equals(until)){
+						record.add(since);
+					}else{
+						record.add(since+" - "+until);
+					}
+				}
+				if (taskc.equals("true")){
+					record.add("");//task name for the header
+					
+				}
+				if (datac.equals("true")){
+					if (db.equals("std")){
+						record.add("Demo");//add database
+						
+					}
+					if (db.equals("research")){
+						record.add("research");
+					}
+					
+				}
+				
+				record.add(String.valueOf(NumberOfInCompletedSessions+NumberOfCompletedSessions));
+				record.add(String.valueOf(NumberOfCompletedSessions));
+				record.add(String.valueOf(Math.round(cr) ));
+				recordSet.add(record);
+				//jLogger.debug("datac is: "+datac);
+				return recordSet; 
+			}
+			//////////for tasks/////////////////////////////
+			if (taskc.equals("true"))
+			{
+				calculateSessionTasks(sessions,tasks);
+				for (int j=0;j<tasks.size();j++){
+					ArrayList recordT =  new ArrayList();
+					HashMap task = new HashMap();
+					task = (HashMap) tasks.get(j);
+					
+					//if (taskName.equals(task.get("name")) || taskName.equals("")){
+					String tName = (String) task.get("name");
+					if (tName.contains(taskName) || taskName.equals("")){
+						//if (session==null) throw new Exception("session is null");
+						recordT.add(studyName);
+						float started = ((Integer) task.get("started"));
+						float complete = ((Integer) task.get("completed"));
+						//int inComplete = (Integer) task.get("Incomplete");
+						recordT.add(task.get("name"));
+						if (timec.equals("true")){
+							if (since.equals(until)){
+								recordT.add(since);
+							}else{
+								recordT.add(since+" - "+until);
+							}
+						}
+						
+						if (datac.equals("true")){
+							if (db.equals("std")){
+								recordT.add("Demo");//add database
+							}
+							if (db.equals("research")){
+								recordT.add("research");
+							}
+							if (db.equals("warehouse")){
+								recordT.add("research");
+							}
+						}
+						recordT.add(String.valueOf((int)started));
+						recordT.add(String.valueOf((int)complete));
+						if (started==0){
+							recordT.add(String.valueOf(0));
+							
+						}else{
+							recordT.add(String.valueOf( Math.round(((complete)/started)*100 )) );
+							
+						}
+						
+					}
+					if(recordT.size()!=0) recordSet.add(recordT);
+				}
+				
+			}
+		
+		}catch(Exception e){
+			e.printStackTrace();
+			return recordSet;
+			//throw new Exception("error in createRS: "+e.getMessage());
+		}
+					
+		return recordSet;
+		
+	}
+	private void calculateSessionTasks(ArrayList sessions,ArrayList tasks) throws Exception{
+		
+		try{
+			for (int i=0;i<sessions.size();i++){
+				sessionBean session= (sessionBean) sessions.get(i);
+				ArrayList sessionTasks = session.getTasks();
+				for (int j=0;j<sessionTasks.size();j++){			
+					HashMap task = (HashMap) sessionTasks.get(j);
+					updateTasks(tasks,task);
+				}
+			}
+			
+		}catch(Exception e){
+			throw new Exception("error in calculateSessionTasks: "+e.getMessage());
+		}
+		
+		
+	}
+	private void updateTasks(ArrayList tasks,HashMap task) throws Exception{
+		
+		try{
+			Integer started = (Integer) task.get("started");
+			Integer completed = (Integer) task.get("completed");
+			if (started == null || completed == null) throw new Exception("updateTasks: started or completed is null");
+			boolean exit =false;
+			for (int i=0;i<tasks.size()&& !exit;i++){
+				HashMap t = (HashMap) tasks.get(i);
+				String name = (String) t.get("name");
+				if (name==null) throw new Exception("updateTasks: name is null");
+				if (name.equals(task.get("name"))){
+					exit=true;
+					if (started==1){
+						int startedmainTask = (Integer) t.get("started");
+						startedmainTask++;
+						t.put("started", startedmainTask);
+					}
+					if (completed==1){
+						int completedmainTask = (Integer) t.get("completed");
+						completedmainTask++;
+						t.put("completed", completedmainTask);
+						
+					}
+					
+				}
+				
+			}
+		}catch(Exception e){
+			throw new Exception("error in updateTasks: "+e.getMessage());
+		}
+	}
 
 }
 

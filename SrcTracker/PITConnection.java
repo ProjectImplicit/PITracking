@@ -1,4 +1,4 @@
-package org.uva.tracker;
+package org.uva.util;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -13,24 +13,6 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
 import org.uva.dao.ConnectionPool;
-
-
-/**
- * 
- *  
- * 
- * Singleton class manage database connections
- * 
- * 
- * Date created : 01-Feb-2014
- * 
- * @version $Revision: 10716 $
- * 
- * @author Ben G 
- * 
- * 
- * 
- */
 
 public class PITConnection {
 	
@@ -70,8 +52,8 @@ public class PITConnection {
 					initContext = new InitialContext();
 					envContext = (Context) initContext
 							.lookup("java:/comp/env");
-					std = (DataSource) envContext.lookup("test/jdbc/std");
-					research = (DataSource) envContext.lookup("test/jdbc/research");
+					std = (DataSource) envContext.lookup("new/jdbc/std");
+					research = (DataSource) envContext.lookup("new/jdbc/research");
 					//fpi = (DataSource) envContext.lookup("tesst/jdbc/fpi");
 					newwareresearch = (DataSource) envContext.lookup("jdbc/dw/research");
 					oldwareresearch = (DataSource) envContext.lookup("jdbc/dw/research");

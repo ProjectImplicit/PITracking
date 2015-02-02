@@ -1,4 +1,4 @@
-package org.uva.tracker;
+package org.uva.util;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -31,21 +31,10 @@ import edu.yale.its.util.ChainedException;
 
 
 
-/**
- * 
- * 
- * Hold information about a study
- * 
- * 
- * Date created : 01-Feb-2014
- * 
- * @version $Revision: 10716 $
- * 
- * @author Ben G 
- * 
- * 
- * 
- */
+
+
+
+
 
 public class Studies {
 	
@@ -451,26 +440,12 @@ public class Studies {
 				HistoryStudiesID = getStudiesByURL(HistoryStudyConfigURL,"history");
 				
 			}else{
-				//Calendar now = Calendar.getInstance();
-				//int daysDifference = 0;
-				//Date d1 = currentHistoryDateStamp.getTime();
-				//Date d2 =now.getTime();
-				//daysDifference=(int)( ( d2.getTime() - d1.getTime() )/ (1000 * 60 * 60 * 24) ) ;
-				//if (daysDifference >=DaysDiff){
-					//currentHistoryDateStamp = Calendar.getInstance();
-					HistoryStudiesID = getStudiesByURL(HistoryStudyConfigURL,"history");
-					
-				//}
-			
+				HistoryStudiesID = getStudiesByURL(HistoryStudyConfigURL,"history");
 			}
 		}
 		
 	}
-		
-		
-		
-	
-	
+
 	private String getStudyNameByURL(String url) throws Exception{
 		
 		
