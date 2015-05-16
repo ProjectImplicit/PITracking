@@ -1,4 +1,4 @@
-package org.uva.dao.oracle;
+package org.uva.tracker;
 
 
 import java.io.IOException;
@@ -510,7 +510,7 @@ public ArrayList getSessionPerResultSetTask(String StudyName,String from,String 
 	
 	
 	//System.out.println("starting getSessionByCreationDate");
-	questionare = "SELECT DISTINCT SESSION_ID,study_name,session_status,creation_date FROM yuiat_sessions_v";
+	questionare = "SELECT DISTINCT SESSION_ID,study_name,session_status,session_date FROM yuiat_sessions_v";
 		
 	if (StudyName.equals("")){
 	}else{
@@ -522,36 +522,36 @@ public ArrayList getSessionPerResultSetTask(String StudyName,String from,String 
 	if (!from.equals("") && !until.equals("")){
 		if (where){
 			if (from.equals(until)){
-				questionare = questionare + " AND TRUNC(CREATION_DATE) = TO_DATE('"+from+"','mm/dd/yyyy')";
+				questionare = questionare + " AND TRUNC(SESSION_DATE) = TO_DATE('"+from+"','mm/dd/yyyy')";
 			}else{
-				questionare = questionare + " AND TRUNC(CREATION_DATE) >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(CREATION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
+				questionare = questionare + " AND TRUNC(SESSION_DATE) >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(SESSION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
 				
 			}
 		}else{
 			if (from.equals(until)){
-				questionare = questionare + " where TRUNC(CREATION_DATE) = TO_DATE('"+from+"','mm/dd/yyyy')";
+				questionare = questionare + " where TRUNC(SESSION_DATE) = TO_DATE('"+from+"','mm/dd/yyyy')";
 			}else{
-				questionare = questionare + " where TRUNC(CREATION_DATE) >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(CREATION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
+				questionare = questionare + " where TRUNC(SESSION_DATE) >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(SESSION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
 				
 			}
 		}
 	}
 	if(!task.equals("")){
 		if (StudyName=="" || StudyName ==null){
-			questionare = "select v.SESSION_ID,v.study_name,v.session_status,v.creation_date from YUIAT_SESSIONS_V v,YUIAT_SESSION_TASKS_V t where v.SESSION_ID=t.SESSION_ID and t.TASK_ID like '%"+task+"%'";
+			questionare = "select v.SESSION_ID,v.study_name,v.session_status,v.session_date from YUIAT_SESSIONS_V v,YUIAT_SESSION_TASKS_V t where v.SESSION_ID=t.SESSION_ID and t.TASK_ID like '%"+task+"%'";
 		}else{
-			questionare = "select v.SESSION_ID,v.study_name,v.session_status,v.creation_date from YUIAT_SESSIONS_V v,YUIAT_SESSION_TASKS_V t where v.SESSION_ID=t.SESSION_ID and v.STUDY_NAME ='"+StudyName+"' and t.TASK_ID like '%"+task+"%'";
+			questionare = "select v.SESSION_ID,v.study_name,v.session_status,v.session_date from YUIAT_SESSIONS_V v,YUIAT_SESSION_TASKS_V t where v.SESSION_ID=t.SESSION_ID and v.STUDY_NAME ='"+StudyName+"' and t.TASK_ID like '%"+task+"%'";
 		}
 		if (!from.equals("") && !until.equals("")){
 			if (from.equals(until)){
-				questionare = questionare + " AND TRUNC(v.CREATION_DATE) =  TO_DATE('"+from+"','mm/dd/yyyy')";
+				questionare = questionare + " AND TRUNC(v.SESSION_DATE) =  TO_DATE('"+from+"','mm/dd/yyyy')";
 			}else{
-				questionare = questionare + " AND TRUNC(v.CREATION_DATE) >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(v.CREATION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
+				questionare = questionare + " AND TRUNC(v.SESSION_DATE) >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(v.SESSION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
 				
 			}
 		}
 	}
-	questionare = questionare + " order by creation_date";
+	questionare = questionare + " order by session_date";
 	try{
 		
 			PITConnection.getInstance(false);
@@ -717,7 +717,7 @@ private String createSQLString(HashMap args){
 	
 	String questionare;
 	boolean where = false;
-	questionare = "SELECT DISTINCT SESSION_ID,study_name,session_status,creation_date FROM yuiat_sessions_v";
+	questionare = "SELECT DISTINCT SESSION_ID,study_name,session_status,session_date FROM yuiat_sessions_v";
 	String StudyName = (String)arguments.get("studyname"); 
 	String from = (String)arguments.get("since");
 	String until = (String)arguments.get("until");
@@ -733,36 +733,36 @@ private String createSQLString(HashMap args){
 	if (!from.equals("") && !until.equals("")){
 		if (where){
 			if (from.equals(until)){
-				questionare = questionare + " AND TRUNC(CREATION_DATE) = TO_DATE('"+from+"','mm/dd/yyyy')";
+				questionare = questionare + " AND TRUNC(SESSION_DATE) = TO_DATE('"+from+"','mm/dd/yyyy')";
 			}else{
-				questionare = questionare + " AND TRUNC(CREATION_DATE) >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(CREATION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
+				questionare = questionare + " AND TRUNC(SESSION_DATE) >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(SESSION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
 				
 			}
 		}else{
 			if (from.equals(until)){
-				questionare = questionare + " where TRUNC(CREATION_DATE) = TO_DATE('"+from+"','mm/dd/yyyy')";
+				questionare = questionare + " where TRUNC(SESSION_DATE) = TO_DATE('"+from+"','mm/dd/yyyy')";
 			}else{
-				questionare = questionare + " where TRUNC(CREATION_DATE) >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(CREATION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
+				questionare = questionare + " where TRUNC(SESSION_DATE) >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(SESSION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
 				
 			}
 		}
 	}
 	if(!task.equals("")){
 		if (StudyName=="" || StudyName ==null){
-			questionare = "select v.SESSION_ID,v.study_name,v.session_status,v.creation_date from YUIAT_SESSIONS_V v,YUIAT_SESSION_TASKS_V t where v.SESSION_ID=t.SESSION_ID and t.TASK_ID like '%"+task+"%'";
+			questionare = "select v.SESSION_ID,v.study_name,v.session_status,v.session_date from YUIAT_SESSIONS_V v,YUIAT_SESSION_TASKS_V t where v.SESSION_ID=t.SESSION_ID and t.TASK_ID like '%"+task+"%'";
 		}else{
-			questionare = "select v.SESSION_ID,v.study_name,v.session_status,v.creation_date from YUIAT_SESSIONS_V v,YUIAT_SESSION_TASKS_V t where v.SESSION_ID=t.SESSION_ID and v.STUDY_NAME ='"+StudyName+"' and t.TASK_ID like '%"+task+"%'";
+			questionare = "select v.SESSION_ID,v.study_name,v.session_status,v.session_date from YUIAT_SESSIONS_V v,YUIAT_SESSION_TASKS_V t where v.SESSION_ID=t.SESSION_ID and v.STUDY_NAME ='"+StudyName+"' and t.TASK_ID like '%"+task+"%'";
 		}
 		if (!from.equals("") && !until.equals("")){
 			if (from.equals(until)){
-				questionare = questionare + " AND TRUNC(v.CREATION_DATE) =  TO_DATE('"+from+"','mm/dd/yyyy')";
+				questionare = questionare + " AND TRUNC(v.SESSION_DATE) =  TO_DATE('"+from+"','mm/dd/yyyy')";
 			}else{
-				questionare = questionare + " AND TRUNC(v.CREATION_DATE) >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(v.CREATION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
+				questionare = questionare + " AND TRUNC(v.SESSION_DATE) >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(v.SESSION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
 				
 			}
 		}
 	}
-	questionare = questionare + " order by creation_date";
+	questionare = questionare + " order by session_date";
 	return questionare;
 	
 }
@@ -974,7 +974,7 @@ public ArrayList getSessionPerResultSetStudy(String StudyName,String from,String
 	
 	
 	//System.out.println("starting getSessionByCreationDate");
-	questionare = "SELECT DISTINCT SESSION_ID,study_name,session_status,creation_date FROM yuiat_sessions_v";
+	questionare = "SELECT DISTINCT SESSION_ID,study_name,session_status,session_date FROM yuiat_sessions_v";
 	
 	if (StudyName.equals("")){
 	}else{
@@ -984,36 +984,36 @@ public ArrayList getSessionPerResultSetStudy(String StudyName,String from,String
 	if (!from.equals("") && !until.equals("")){
 		if (where){
 			if (from.equals(until)){
-				questionare = questionare + " AND TRUNC(CREATION_DATE) = TO_DATE('"+from+"','mm/dd/yyyy')";
+				questionare = questionare + " AND TRUNC(SESSION_DATE) = TO_DATE('"+from+"','mm/dd/yyyy')";
 			}else{
-				questionare = questionare + " AND TRUNC(CREATION_DATE) >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(CREATION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
+				questionare = questionare + " AND TRUNC(SESSION_DATE) >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(SESSION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
 				
 			}
 		}else{
 			if (from.equals(until)){
-				questionare = questionare + " where TRUNC(CREATION_DATE) = TO_DATE('"+from+"','mm/dd/yyyy')";
+				questionare = questionare + " where TRUNC(SESSION_DATE) = TO_DATE('"+from+"','mm/dd/yyyy')";
 			}else{
-				questionare = questionare + " where TRUNC(CREATION_DATE) >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(CREATION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
+				questionare = questionare + " where TRUNC(SESSION_DATE) >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(SESSION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
 				
 			}
 		}
 	}
 	if(!task.equals("")){
 		if (StudyName=="" || StudyName ==null){
-			questionare = "select v.SESSION_ID,v.study_name,v.session_status,v.creation_date from YUIAT_SESSIONS_V v,YUIAT_SESSION_TASKS_V t where v.SESSION_ID=t.SESSION_ID and t.TASK_ID like '%"+task+"%'";
+			questionare = "select v.SESSION_ID,v.study_name,v.session_status,v.session_date from YUIAT_SESSIONS_V v,YUIAT_SESSION_TASKS_V t where v.SESSION_ID=t.SESSION_ID and t.TASK_ID like '%"+task+"%'";
 		}else{
-			questionare = "select v.SESSION_ID,v.study_name,v.session_status,v.creation_date from YUIAT_SESSIONS_V v,YUIAT_SESSION_TASKS_V t where v.SESSION_ID=t.SESSION_ID and v.STUDY_NAME ='"+StudyName+"' and t.TASK_ID like '%"+task+"%'";
+			questionare = "select v.SESSION_ID,v.study_name,v.session_status,v.session_date from YUIAT_SESSIONS_V v,YUIAT_SESSION_TASKS_V t where v.SESSION_ID=t.SESSION_ID and v.STUDY_NAME ='"+StudyName+"' and t.TASK_ID like '%"+task+"%'";
 		}
 		if (!from.equals("") && !until.equals("")){
 			if (from.equals(until)){
-				questionare = questionare + " AND TRUNC(v.CREATION_DATE) =  TO_DATE('"+from+"','mm/dd/yyyy')";
+				questionare = questionare + " AND TRUNC(v.SESSION_DATE) =  TO_DATE('"+from+"','mm/dd/yyyy')";
 			}else{
-				questionare = questionare + " AND TRUNC(v.CREATION_DATE) >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(v.CREATION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
+				questionare = questionare + " AND TRUNC(v.SESSION_DATE) >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(v.SESSION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
 				
 			}
 		}
 	}
-	questionare = questionare + " order by creation_date";
+	questionare = questionare + " order by session_date";
 	try{
 		PITConnection.getInstance(false);
 		connection = PITConnection.getConnection(db);
@@ -1322,7 +1322,7 @@ public ArrayList getSessionPerResultSet(String StudyName,String from,String unti
 	boolean where = false;
 	ArrayList recordSet = new ArrayList();
 	String questionare = "";
-	questionare = "SELECT DISTINCT SESSION_ID,study_name,session_status,creation_date FROM yuiat_sessions_v";
+	questionare = "SELECT DISTINCT SESSION_ID,study_name,session_status,session_date FROM yuiat_sessions_v";
 		
 	if (StudyName.equals("")){
 	}else{
@@ -1334,36 +1334,36 @@ public ArrayList getSessionPerResultSet(String StudyName,String from,String unti
 	if (!from.equals("") && !until.equals("")){
 		if (where){
 			if (from.equals(until)){
-				questionare = questionare + " AND TRUNC(CREATION_DATE) = TO_DATE('"+from+"','mm/dd/yyyy')";
+				questionare = questionare + " AND TRUNC(SESSION_DATE) = TO_DATE('"+from+"','mm/dd/yyyy')";
 			}else{
-				questionare = questionare + " AND TRUNC(CREATION_DATE) >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(CREATION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
+				questionare = questionare + " AND TRUNC(SESSION_DATE) >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(SESSION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
 				
 			}
 		}else{
 			if (from.equals(until)){
-				questionare = questionare + " where TRUNC(CREATION_DATE) = TO_DATE('"+from+"','mm/dd/yyyy')";
+				questionare = questionare + " where TRUNC(SESSION_DATE) = TO_DATE('"+from+"','mm/dd/yyyy')";
 			}else{
-				questionare = questionare + " where TRUNC(CREATION_DATE) >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(CREATION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
+				questionare = questionare + " where TRUNC(SESSION_DATE) >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(SESSION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
 				
 			}
 		}
 	}
 	if(!task.equals("")){
 		if (StudyName=="" || StudyName ==null){
-			questionare = "select v.SESSION_ID,v.study_name,v.session_status,v.creation_date from YUIAT_SESSIONS_V v,YUIAT_SESSION_TASKS_V t where v.SESSION_ID=t.SESSION_ID and t.TASK_ID like '%"+task+"%'";
+			questionare = "select v.SESSION_ID,v.study_name,v.session_status,v.session_date from YUIAT_SESSIONS_V v,YUIAT_SESSION_TASKS_V t where v.SESSION_ID=t.SESSION_ID and t.TASK_ID like '%"+task+"%'";
 		}else{
-			questionare = "select v.SESSION_ID,v.study_name,v.session_status,v.creation_date from YUIAT_SESSIONS_V v,YUIAT_SESSION_TASKS_V t where v.SESSION_ID=t.SESSION_ID and v.STUDY_NAME ='"+StudyName+"' and t.TASK_ID like '%"+task+"%'";
+			questionare = "select v.SESSION_ID,v.study_name,v.session_status,v.session_date from YUIAT_SESSIONS_V v,YUIAT_SESSION_TASKS_V t where v.SESSION_ID=t.SESSION_ID and v.STUDY_NAME ='"+StudyName+"' and t.TASK_ID like '%"+task+"%'";
 		}
 		if (!from.equals("") && !until.equals("")){
 			if (from.equals(until)){
-				questionare = questionare + " AND TRUNC(v.CREATION_DATE) =  TO_DATE('"+from+"','mm/dd/yyyy')";
+				questionare = questionare + " AND TRUNC(v.SESSION_DATE) =  TO_DATE('"+from+"','mm/dd/yyyy')";
 			}else{
-				questionare = questionare + " AND TRUNC(v.CREATION_DATE) >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(v.CREATION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
+				questionare = questionare + " AND TRUNC(v.SESSION_DATE) >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(v.SESSION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
 				
 			}
 		}
 	}
-	questionare = questionare + " order by creation_date";
+	questionare = questionare + " order by session_date";
 	try{
 			
 			PITConnection.getInstance(false);
@@ -1499,7 +1499,7 @@ public ArrayList getSessionByCreationDate(String StudyName,String from,String un
 		
 			//System.out.println("starting getSessionByCreationDate");
 		
-			questionare = "SELECT DISTINCT SESSION_ID,study_name,session_status,creation_date FROM yuiat_sessions_v";
+			questionare = "SELECT DISTINCT SESSION_ID,study_name,session_status,session_date FROM yuiat_sessions_v";
 					
 			if (StudyName.equals("")){
 			}else{
@@ -1512,16 +1512,16 @@ public ArrayList getSessionByCreationDate(String StudyName,String from,String un
 			if (!from.equals("") && !until.equals("")){
 				if (where){
 					if (from.equals(until)){
-						questionare = questionare + " AND TRUNC(CREATION_DATE) = TO_DATE('"+from+"','mm/dd/yyyy')";
+						questionare = questionare + " AND TRUNC(SESSION_DATE) = TO_DATE('"+from+"','mm/dd/yyyy')";
 					}else{
-						questionare = questionare + " AND CREATION_DATE >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(CREATION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
+						questionare = questionare + " AND SESSION_DATE >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(SESSION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
 						
 					}
 				}else{
 					if (from.equals(until)){
-						questionare = questionare + " where TRUNC(CREATION_DATE) = TO_DATE('"+from+"','mm/dd/yyyy')";
+						questionare = questionare + " where TRUNC(SESSION_DATE) = TO_DATE('"+from+"','mm/dd/yyyy')";
 					}else{
-						questionare = questionare + " where CREATION_DATE >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(CREATION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
+						questionare = questionare + " where SESSION_DATE >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(SESSION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
 						
 					}
 					
@@ -1532,25 +1532,25 @@ public ArrayList getSessionByCreationDate(String StudyName,String from,String un
 			if(!task.equals("")){
 				
 				if (StudyName=="" || StudyName ==null){
-					questionare = "select v.SESSION_ID,v.study_name,v.session_status,v.creation_date from YUIAT_SESSIONS_V v,YUIAT_SESSION_TASKS_V t where v.SESSION_ID=t.SESSION_ID and t.TASK_ID like '%"+task+"%'";
+					questionare = "select v.SESSION_ID,v.study_name,v.session_status,v.session_date from YUIAT_SESSIONS_V v,YUIAT_SESSION_TASKS_V t where v.SESSION_ID=t.SESSION_ID and t.TASK_ID like '%"+task+"%'";
 					
 				}else{
-					questionare = "select v.SESSION_ID,v.study_name,v.session_status,v.creation_date from YUIAT_SESSIONS_V v,YUIAT_SESSION_TASKS_V t where v.SESSION_ID=t.SESSION_ID and v.STUDY_NAME ='"+StudyName+"' and t.TASK_ID like '%"+task+"%'";
+					questionare = "select v.SESSION_ID,v.study_name,v.session_status,v.session_date from YUIAT_SESSIONS_V v,YUIAT_SESSION_TASKS_V t where v.SESSION_ID=t.SESSION_ID and v.STUDY_NAME ='"+StudyName+"' and t.TASK_ID like '%"+task+"%'";
 				}
 				
 				
 				if (!from.equals("") && !until.equals("")){
 					if (from.equals(until)){
-						questionare = questionare + " AND TRUNC(v.CREATION_DATE) =  TO_DATE('"+from+"','mm/dd/yyyy')";
+						questionare = questionare + " AND TRUNC(v.SESSION_DATE) =  TO_DATE('"+from+"','mm/dd/yyyy')";
 					}else{
-						questionare = questionare + " AND v.CREATION_DATE >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(v.CREATION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
+						questionare = questionare + " AND v.SESSION_DATE >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  TRUNC(v.SESSION_DATE) <=  TO_DATE('"+until+"','mm/dd/yyyy')";
 						
 					}
 					
 				}
 			
 			}
-			questionare = questionare + " order by creation_date";
+			questionare = questionare + " order by session_date";
 	
 		try{
 			
@@ -1635,7 +1635,7 @@ public ArrayList getSessionByCreationDate(String StudyName,String from,String un
 		String questionare = "";
 
 
-		questionare = "SELECT DISTINCT SESSION_ID,study_name,session_status,creation_date FROM yuiat_sessions_v";
+		questionare = "SELECT DISTINCT SESSION_ID,study_name,session_status,session_date FROM yuiat_sessions_v";
 		if (StudyName.equals("")){
 		}else{
 		questionare = questionare + " where study_name ='"+StudyName+"'";
@@ -1647,16 +1647,16 @@ public ArrayList getSessionByCreationDate(String StudyName,String from,String un
 		if (!from.equals("") && !until.equals("")){
 		if (where){
 		if (from.equals(until)){
-		questionare = questionare + " AND TRUNC(CREATION_DATE) = TO_DATE('"+from+"','mm/dd/yyyy')";
+		questionare = questionare + " AND TRUNC(SESSION_DATE) = TO_DATE('"+from+"','mm/dd/yyyy')";
 		}else{
-		questionare = questionare + " AND CREATION_DATE >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  CREATION_DATE <=  TO_DATE('"+until+"','mm/dd/yyyy')";
+		questionare = questionare + " AND SESSION_DATE >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  SESSION_DATE <=  TO_DATE('"+until+"','mm/dd/yyyy')";
 
 		}
 		}else{
 		if (from.equals(until)){
-		questionare = questionare + " where TRUNC(CREATION_DATE) = TO_DATE('"+from+"','mm/dd/yyyy')";
+		questionare = questionare + " where TRUNC(SESSION_DATE) = TO_DATE('"+from+"','mm/dd/yyyy')";
 		}else{
-		questionare = questionare + " where CREATION_DATE >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  CREATION_DATE <=  TO_DATE('"+until+"','mm/dd/yyyy')";
+		questionare = questionare + " where SESSION_DATE >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  SESSION_DATE <=  TO_DATE('"+until+"','mm/dd/yyyy')";
 
 		}
 
@@ -1667,18 +1667,18 @@ public ArrayList getSessionByCreationDate(String StudyName,String from,String un
 		if(!task.equals("")){
 
 		if (StudyName=="" || StudyName ==null){
-		questionare = "select v.SESSION_ID,v.study_name,v.session_status,v.creation_date from YUIAT_SESSIONS_V v,YUIAT_SESSION_TASKS_V t where v.SESSION_ID=t.SESSION_ID and t.TASK_ID like '%"+task+"%'";
+		questionare = "select v.SESSION_ID,v.study_name,v.session_status,v.session_date from YUIAT_SESSIONS_V v,YUIAT_SESSION_TASKS_V t where v.SESSION_ID=t.SESSION_ID and t.TASK_ID like '%"+task+"%'";
 
 		}else{
-		questionare = "select v.SESSION_ID,v.study_name,v.session_status,v.creation_date from YUIAT_SESSIONS_V v,YUIAT_SESSION_TASKS_V t where v.SESSION_ID=t.SESSION_ID and v.STUDY_NAME ='"+StudyName+"' and t.TASK_ID like '%"+task+"%'";
+		questionare = "select v.SESSION_ID,v.study_name,v.session_status,v.session_date from YUIAT_SESSIONS_V v,YUIAT_SESSION_TASKS_V t where v.SESSION_ID=t.SESSION_ID and v.STUDY_NAME ='"+StudyName+"' and t.TASK_ID like '%"+task+"%'";
 		}
 
 
 		if (!from.equals("") && !until.equals("")){
 		if (from.equals(until)){
-		questionare = questionare + " AND TRUNC(v.CREATION_DATE) =  TO_DATE('"+from+"','mm/dd/yyyy')";
+		questionare = questionare + " AND TRUNC(v.SESSION_DATE) =  TO_DATE('"+from+"','mm/dd/yyyy')";
 		}else{
-		questionare = questionare + " AND v.CREATION_DATE >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  v.CREATION_DATE <=  TO_DATE('"+until+"','mm/dd/yyyy')";
+		questionare = questionare + " AND v.SESSION_DATE >=  TO_DATE('"+from+"','mm/dd/yyyy') AND  v.SESSION_DATE <=  TO_DATE('"+until+"','mm/dd/yyyy')";
 
 		}
 
